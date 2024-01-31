@@ -1,0 +1,151 @@
+---
+title: "Recorder Feedback Example Email"
+params:
+    user_name: ""
+    user_data: ""
+    bg_data: ""
+    bg_computed_objects: ""
+    user_computed_objects: ""
+output: blastula::blastula_email
+self_contained: T
+---
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F,
+                      warning = F,
+                      message = FALSE, 
+                      fig.align = 'center',
+                      error=F,
+                      results='asis')
+```
+
+
+```{r calculations, include=F}
+#here you can do simple calculations for generating metrics that you later include in the text of the email. However if you wish to do more complex calculations it is recommended that these are done via prior (method tbc)
+
+# a simple metric for number of records per day and a vector of species names
+n_species <- params$user_data %>% pull(species) %>% unique() %>% length()
+n_records <- params$user_data %>% nrow()
+species_names <- params$user_data %>% 
+  group_by(species) %>% 
+  summarise(n = n()) %>% 
+  arrange(desc(n)) %>%
+  pull(species)
+
+# a dervied data frame for number of records on each day
+records_per_day <- params$user_data %>% 
+  group_by(date) %>% 
+  summarise(number_of_records =n()) %>%
+  mutate(date = as.Date(date))
+
+```
+
+```{r packages, include =F}
+library(dplyr) #wrangling
+library(ggplot2) #plotting
+library(ggspatial) #maps
+library(sf)
+library(htmltools)
+```
+
+```{css, echo=FALSE}
+body{
+  font-family: Helvetica;
+  font-size: 13pt;
+}
+
+```
+
+# Hello `r params$user_name`!
+
+This is an example showing how different text/visual elements can be generated in an email.
+
+## Use precalculated values/strings using inline R code
+
+You made `r n_records` records of `r n_species` species!
+
+These were `r paste0(species_names,collapse = ", ")`.
+
+## Use precalculated values for generating insight
+
+Other recorders made on average `r params$bg_computed_objects$mean_n_records` records of an average of `r params$bg_computed_objects$mean_n_species` species!
+
+## Print tables using knitr::kable()
+
+Your most recent records
+
+```{r table}
+params$user_data %>% 
+  arrange(desc(date)) %>% 
+  select(Species = species,Date = date) %>% 
+  head() %>% 
+  knitr::kable()
+```
+
+## Add plots through {ggplot2}
+
+Here's a plot of your recent recording activity from `r first(records_per_day$date)` to `r last(records_per_day$date)`.
+
+```{r plot}
+ggplot(records_per_day,aes(x = date,y = number_of_records))+
+  geom_col()+
+  theme_minimal(base_size = 18)+
+  labs(x = "Date",y = "Number of records")
+```
+
+## Add static maps with {ggspatial}
+
+Here are your `r n_records` records plotted on a map.
+
+```{r map}
+user_data_sf <- sf::st_as_sf(params$user_data,coords =c("longitude","latitude"),crs = 4326)
+bg_data_sf <- sf::st_as_sf(params$bg_data,coords =c("longitude","latitude"),crs = 4326)
+
+ggplot() +
+  ggspatial::annotation_map_tile(zoomin = -1) + # loads background map tiles from a tile source
+  ggspatial::annotation_spatial(bg_data_sf,colour = "black")+
+  ggspatial::layer_spatial(user_data_sf,colour = "red")
+  
+```
+
+## Include images
+
+Here is an image inserted using markdown. Use this for generic graphics/branding/logos etc.
+
+![](https://irecord.org.uk/sites/default/files/irecord_logo.png)
+
+And here is an image inserted using R code.
+
+```{r image, out.width=400}
+#include an image from a url within R code. This gives you options to provide a caption or other chunk option (see: https://www.rstudio.com/wp-content/uploads/2015/03/rmarkdown-reference.pdf), 
+#This also provides ways to include an image based off a url that is stored in user_data in order to show the user the image of their record
+knitr::include_graphics("https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Peacock_butterfly_%28Aglais_io%29_2.jpg/220px-Peacock_butterfly_%28Aglais_io%29_2.jpg")
+```
+
+
+## Buttons and links
+
+Links can be done using markdown syntax such as [this is a link](https://www.irecord.org.uk)
+
+Buttons in emails are not as straightforward as you might think, here's a way to do it in R.
+
+```{r}
+url = "https://www.irecord.org.uk"
+div(style="margin: auto;width: 100%;text-align: center;",
+      a("Click here", 
+        href=url,
+        style ="font-size: 18px; color: #ffffff; font-weight: bold; text-decoration: none; border-radius: 5px; background-color: #92A41A; border-top: 12px solid #92A41A; border-bottom: 12px solid #92A41A; border-right: 18px solid #92A41A; border-left: 18px solid #92A41A; display: inline-block;")
+    )
+```
+
+---
+
+This email was generated at `r Sys.time()`.
+
+Put any disclaimers / information text as a footer in here.
+
+No longer want to receive these emails? Click [here](https://www.irecord.org.uk)
+
+

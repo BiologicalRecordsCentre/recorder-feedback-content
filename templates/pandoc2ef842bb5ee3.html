@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"> <!-- utf-8 works for most cases -->
+<meta name="viewport" content="width=device-width"> <!-- Forcing initial-scale shouldn't be necessary -->
+<meta http-equiv="X-UA-Compatible" content="IE=edge"> <!-- Use the latest (edge) version of IE rendering engine -->
+<meta name="x-apple-disable-message-reformatting">  <!-- Disable auto-scale in iOS 10 Mail entirely -->
+<meta name="format-detection" content="telephone=no,address=no,email=no,date=no,url=no"> <!-- Tell iOS not to automatically link certain text strings. -->
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
+<!-- What it does: Makes background images in 72ppi Outlook render at correct size. -->
+<!--[if gte mso 9]>
+<xml>
+<o:OfficeDocumentSettings>
+<o:AllowPNG/>
+<o:PixelsPerInch>96</o:PixelsPerInch>
+</o:OfficeDocumentSettings>
+</xml>
+<![endif]-->
+<title>MyRecord Example Email</title>
+<style>
+body {
+font-family: Helvetica, sans-serif;
+font-size: 14px;
+}
+.content {
+background-color: white;
+}
+.content .message-block {
+margin-bottom: 24px;
+}
+.header .message-block, .footer message-block {
+margin-bottom: 12px;
+}
+img {
+max-width: 100%;
+}
+@media only screen and (max-width: 767px) {
+.container {
+width: 100%;
+}
+.articles, .articles tr, .articles td {
+display: block;
+width: 100%;
+}
+.article {
+margin-bottom: 24px;
+}
+}
+</style>
+</head>
+<body style="background-color:#f6f6f6;font-family:Helvetica, sans-serif;color:#222;margin:0;padding:0;">
+<table width="85%" align="center" class="container" style="max-width: 1000px;">
+<tr>
+<td style="padding:24px;">
+<div class="header" style="font-family:Helvetica, sans-serif;color:#999999;font-size:12px;font-weight:normal;margin:0 0 24px 0;text-align:center;">
+</div>
+<table width="100%" class="content" style="background-color:white;">
+<tr>
+<td style="padding:12px;"><div id="hello-david" class="section level1">
+<h1>Hello David!</h1>
+<p>Ipsum lorem</p>
+<div id="use-precalculated-values-using-inline-r-code" class="section level2">
+<h2>Use precalculated values using inline R code</h2>
+<p>You recorded 8 species!</p>
+</div>
+<div id="print-tables-using-knitrkable" class="section level2">
+<h2>Print tables using knitr::kable()</h2>
+<p>Your most recent records</p>
+<table>
+<thead>
+<tr class="header">
+<th align="right">X</th>
+<th align="right">latitude</th>
+<th align="right">longitude</th>
+<th align="left">species</th>
+<th align="left">recorder</th>
+<th align="left">date</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">275</td>
+<td align="right">52.01718</td>
+<td align="right">-0.5359349</td>
+<td align="left">Common Blue</td>
+<td align="left">David</td>
+<td align="left">2024-01-31</td>
+</tr>
+<tr class="even">
+<td align="right">615</td>
+<td align="right">52.23172</td>
+<td align="right">-0.3881121</td>
+<td align="left">Large white</td>
+<td align="left">David</td>
+<td align="left">2024-01-31</td>
+</tr>
+<tr class="odd">
+<td align="right">649</td>
+<td align="right">52.34779</td>
+<td align="right">-1.1452039</td>
+<td align="left">Painted Lady</td>
+<td align="left">David</td>
+<td align="left">2024-01-31</td>
+</tr>
+<tr class="even">
+<td align="right">846</td>
+<td align="right">51.52521</td>
+<td align="right">-0.8342308</td>
+<td align="left">Red Admiral</td>
+<td align="left">David</td>
+<td align="left">2024-01-31</td>
+</tr>
+<tr class="odd">
+<td align="right">946</td>
+<td align="right">51.92075</td>
+<td align="right">-0.9148674</td>
+<td align="left">Meadow brown</td>
+<td align="left">David</td>
+<td align="left">2024-01-31</td>
+</tr>
+<tr class="even">
+<td align="right">184</td>
+<td align="right">51.13315</td>
+<td align="right">-1.2799972</td>
+<td align="left">Holly Blue</td>
+<td align="left">David</td>
+<td align="left">2024-01-30</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="add-plots-through-base-plotting-or-ggplot" class="section level2">
+<h2>Add plots through base plotting or ggplot</h2>
+<p>[90m# A tibble: 6 x 2[39m date number_of_records [3m[90m<chr>[39m[23m
+[3m[90m<int>[39m[23m [90m1[39m 2024-01-01 8 [90m2[39m 2024-01-02 8
+[90m3[39m 2024-01-03 3 [90m4[39m 2024-01-04 7 [90m5[39m 2024-01-05 8
+[90m6[39m 2024-01-06 11</p>
+</div>
+<div id="add-static-maps-to-your-email" class="section level2">
+<h2>Add static maps to your email</h2>
+</div>
+</div></td>
+</tr>
+</table>
+<div class="footer" style="font-family:Helvetica, sans-serif;color:#999999;font-size:12px;font-weight:normal;margin:24px 0 0 0;">
+</div>
+</td>
+</tr>
+</table>
+</body>
+</html>
