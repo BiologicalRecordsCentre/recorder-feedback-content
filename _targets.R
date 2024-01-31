@@ -18,7 +18,7 @@ mapping <- tar_map(
   tar_target(user_data, filter(raw_data,recorder == recorder_name)), #generate a df for the user's recording activity
   
   #do any computations on the user data
-  tar_target(user_computed_objects,do_computations(computation = computation_file_user, bg_data=user_data)),
+  tar_target(user_computed_objects,do_computations(computation = computation_file_user, records_data=user_data)),
   
   #render the content
   tar_target(data_story_content, 
@@ -53,7 +53,7 @@ list(
   tar_target(raw_data, read.csv(raw_data_file)),
   
   #carry out the computations on the whole dataset
-  tar_target(bg_computed_objects,do_computations(computation = computation_file, bg_data=raw_data)),
+  tar_target(bg_computed_objects,do_computations(computation = computation_file, records_data=raw_data)),
   
   #do jobs across all users
   mapping

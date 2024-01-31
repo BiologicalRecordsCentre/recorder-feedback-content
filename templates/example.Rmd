@@ -104,7 +104,7 @@ user_data_sf <- sf::st_as_sf(params$user_data,coords =c("longitude","latitude"),
 bg_data_sf <- sf::st_as_sf(params$bg_data,coords =c("longitude","latitude"),crs = 4326)
 
 ggplot() +
-  ggspatial::annotation_map_tile(zoomin = -1) + # loads background map tiles from a tile source
+  ggspatial::annotation_map_tile(zoomin = -1,progress = "none") + # loads background map tiles from a tile source
   ggspatial::annotation_spatial(bg_data_sf,colour = "black")+
   ggspatial::layer_spatial(user_data_sf,colour = "red")
   
