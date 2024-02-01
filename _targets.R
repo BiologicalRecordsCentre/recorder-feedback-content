@@ -7,6 +7,7 @@ tar_option_set(packages = c("dplyr", "ggplot2","rmarkdown","blastula"))
 source("R/render_content.R")
 source("R/do_computations.R")
 source("R/make_meta_table.R")
+source("R/look_for_computed_objects.R")
 
 #get configuration from config.yml
 config <- config::get()

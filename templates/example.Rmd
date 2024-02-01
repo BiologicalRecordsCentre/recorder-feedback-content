@@ -88,7 +88,7 @@ Here's a plot of your recent recording activity from `r first(records_per_day$da
 
 ```{r plot}
 ggplot(records_per_day,aes(x = date,y = number_of_records))+
-  geom_col()+
+  geom_col(fill = "#92A41A")+
   theme_minimal(base_size = 18)+
   labs(x = "Date",y = "Number of records")
 ```

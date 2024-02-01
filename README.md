@@ -30,33 +30,40 @@ The email rendering is done using R markdown. R markdown is used as a very flexi
 
 Content in the emails can be generated using frequently R packages such as dplyr for data manipulation and ggplot2 for creating data visualisations. There are various R packages available for generating maps but there are example scripts that use ggspatial.
 
-The emails are rendered in an email-ready format specified from the R package blastula. The blastula package makes it easy to produce and send HTML email from R.
+The emails are rendered in an email-ready format specified from the R package blastula. The blastula package makes it easy to produce and send HTML email from R. They are rendered as 'self contained' html files so there are no external local image files.
 
 It is not recommended to carry out computationally heavy calculations within the R markdown template, therefore a computation step can be done before rendering. These computations should be coded in scripts located in `R/computations`. The computations are applied separately for the `user_data` and `bg_data`, but this can be the same or different computation scripts.
 
 A configuration file (`config.yml`), which is loaded in using `config::get()`, is where you define the data file, the computation scripts and the template file.
 
+The rendered html items are saved in a folder `renders/[batch_id]` where you have set a batch identifier. The folder contains html files for each recipient and a `.csv` with columns for each file name and the identifier.
+
 ## Development process
 
-### Identify need for recorder feedback and allignement with recorder motivations
+### Ask youself "why?": identify your need for recorder feedback
 
 First, it is important to determine why do we need to send recorder feedback. Some example motivations include:
 
- * To encourage more recording
+ * To encourage more recording in general
  * To encourage a specific type of recording
+ * Targeted recording in space/time/taxonomy
+
+Every design/coding decision should point back to this core motivation.
 
 ### Conceptualisation
 
-Come up with some ideas
+Before coding anything think about what feedback you want to send to recorder, what might it look like, what sort of visuals/text content might you need?
 
 ### Computational requirements
 
 What computations do you need to do in order to produce the feedback items. For example do you need to calculate metrics (e.g. averages) from the background data to compare the user data to?
 
+Develop these computations and write scripts in the `R/computations` folder.
+
 ### Design email template
 
-Produce your R markdown in the `templates` folder.
+Produce your R markdown and save it in the `templates` folder. Use `example.Rmd` for inspiration.
 
 ### Test it out
 
-Generate some emails
+Generate some emails using simulated or real data.
