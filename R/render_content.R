@@ -1,4 +1,4 @@
-render_content <- function(template_file,user_params,user_id){
+render_content <- function(template_file,user_params,user_id,batch_id){
 
   # build a uniaue file name
   
@@ -10,9 +10,9 @@ render_content <- function(template_file,user_params,user_id){
   
   render(template_file,
          output_file = out_file,
-         output_dir = "renders",
+         output_dir = paste0("renders/",batch_id),
          params = user_params,
          quiet=T)
   
-  paste0("renders/",out_file)
+  paste0("renders/",batch_id,"/",out_file)
 }

@@ -1,0 +1,5 @@
+default:
+  data_file: "data/simulated_data_raw.csv"
+  computation_script_bg: "R/computations/computations_example.R"
+  computation_script_user: "R/computations/computations_example.R"
+  template_file: "templates/example.Rmd"

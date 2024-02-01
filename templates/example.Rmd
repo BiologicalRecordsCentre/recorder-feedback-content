@@ -10,8 +10,6 @@ output: blastula::blastula_email
 self_contained: T
 ---
 
-
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = F,
                       warning = F,
@@ -131,7 +129,7 @@ Links can be done using markdown syntax such as [this is a link](https://www.ire
 
 Buttons in emails are not as straightforward as you might think, here's a way to do it in R.
 
-```{r}
+```{r links}
 url = "https://www.irecord.org.uk"
 div(style="margin: auto;width: 100%;text-align: center;",
       a("Click here", 

@@ -6,11 +6,19 @@ tar_option_set(packages = c("dplyr", "ggplot2","rmarkdown","blastula"))
 #load functions needed
 source("R/render_content.R")
 source("R/do_computations.R")
+source("R/make_meta_table.R")
 
-#set up static banching by user
-raw_data_pre <- read.csv("data/simulated_data_raw.csv") #read data
+#get configuration from config.yml
+config <- config::get()
+
+#set up static branching by user
+raw_data_pre <- read.csv(config$data_file) #read data
 users <- unique(raw_data_pre$recorder) #identify users
 values <- data.frame(recorder_name = users) #values for static branching
+
+#batch identifier
+batch_id <- format(Sys.time(),"%s")
+batch_id <- "test_001"
 
 # mapping for static branching
 mapping <- tar_map(
@@ -30,7 +38,8 @@ mapping <- tar_map(
                                   bg_data = raw_data,
                                   bg_computed_objects = bg_computed_objects
                                   ),
-               user_id = recorder_name
+               user_id = recorder_name,
+               batch_id = batch_id
                ),
              format="file") # create the content as html
 )
@@ -38,16 +47,16 @@ mapping <- tar_map(
 # construct pipeline
 list(
   #this links to the full (all records) data file
-  tar_target(raw_data_file, "data/simulated_data_raw.csv", format = "file"),
+  tar_target(raw_data_file, config$data_file, format = "file"),
   
   #this links to the email template file, an R markdown file
-  tar_target(template_file,"templates/example.Rmd", format = "file"),
+  tar_target(template_file,config$template_file, format = "file"),
   
-  #this links to the computation file
-  tar_target(computation_file,"R/computations/computations_example.R", format = "file"),
+  #this links to the computation file applied to all data
+  tar_target(computation_file,config$computation_script_bg, format = "file"),
   
   #this links to the computation script that is applied to the user (this might be the same as the script above)
-  tar_target(computation_file_user,"R/computations/computations_example.R", format = "file"),
+  tar_target(computation_file_user,config$computation_script_user, format = "file"),
   
   #reading in the raw data to R object
   tar_target(raw_data, read.csv(raw_data_file)),
@@ -56,6 +65,13 @@ list(
   tar_target(bg_computed_objects,do_computations(computation = computation_file, records_data=raw_data)),
   
   #do jobs across all users
-  mapping
+  mapping,
+  
+  #create a dataframe of users and their email files
+  tar_combine(meta_table,
+              mapping$data_story_content,
+              command = make_meta_table(c(!!!.x),batch_id),
+              use_names = T,
+              format="file")
 )
 

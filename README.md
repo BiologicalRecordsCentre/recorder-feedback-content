@@ -34,7 +34,7 @@ The emails are rendered in an email-ready format specified from the R package bl
 
 It is not recommended to carry out computationally heavy calculations within the R markdown template, therefore a computation step can be done before rendering. These computations should be coded in scripts located in `R/computations`. The computations are applied separately for the `user_data` and `bg_data`, but this can be the same or different computation scripts.
 
-A configuration file will be where you define the locations of the computation scripts.
+A configuration file (`config.yml`), which is loaded in using `config::get()`, is where you define the data file, the computation scripts and the template file.
 
 ## Development process
 
