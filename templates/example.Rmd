@@ -6,8 +6,8 @@ params:
     bg_data: ""
     bg_computed_objects: ""
     user_computed_objects: ""
-output: blastula::blastula_email
-self_contained: T
+footer-date-time: "`r  Sys.time()`"
+footer-unsubscribe-link: "www.google.com"
 ---
 
 ```{r setup, include=FALSE}
@@ -138,12 +138,5 @@ div(style="margin: auto;width: 100%;text-align: center;",
     )
 ```
 
----
-
-This email was generated at `r Sys.time()`.
-
-Put any disclaimers / information text as a footer in here.
-
-No longer want to receive these emails? Click [here](https://www.irecord.org.uk)
 
 

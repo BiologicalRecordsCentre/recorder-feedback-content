@@ -1,6 +1,12 @@
 library(targets)
 library(tarchetypes)
 
+#distributed computing set up
+library(crew)
+tar_option_set(
+  controller = crew_controller_local(workers = 4)
+)
+
 tar_option_set(packages = c("dplyr", "ggplot2","rmarkdown","blastula"))
 
 #load functions needed
@@ -8,14 +14,15 @@ source("R/render_content.R")
 source("R/do_computations.R")
 source("R/make_meta_table.R")
 source("R/look_for_computed_objects.R")
+source("R/email_format.R")
 
 #get configuration from config.yml
 config <- config::get()
 
 #set up static branching by user
-raw_data_pre <- read.csv(config$data_file) #read data
-users <- unique(raw_data_pre$recorder) #identify users
-values <- data.frame(recorder_name = users) #values for static branching
+users <- read.csv(config$participant_data_file) #read data
+names(users) <- paste0(names(users),"_")
+values <- users #values for static branching
 
 #batch identifier
 batch_id <- format(Sys.time(),"%s")
@@ -24,7 +31,8 @@ batch_id <- "test_001"
 # mapping for static branching
 mapping <- tar_map(
   values = values,
-  tar_target(user_data, filter(raw_data,recorder == recorder_name)), #generate a df for the user's recording activity
+  names = user_id_,
+  tar_target(user_data, filter(raw_data,user_id == user_id_)), #generate a df for the user's recording activity
   
   #do any computations on the user data
   tar_target(user_computed_objects,do_computations(computation = computation_file_user, records_data=user_data)),
@@ -33,14 +41,15 @@ mapping <- tar_map(
   tar_target(data_story_content, 
              render_content(
                template_file = template_file,
-               user_params = list(user_name = recorder_name,
+               user_params = list(user_name = name_,
                                   user_data = user_data,
                                   user_computed_objects = user_computed_objects,
                                   bg_data = raw_data,
                                   bg_computed_objects = bg_computed_objects
                                   ),
-               user_id = recorder_name,
-               batch_id = batch_id
+               user_id = user_id_,
+               batch_id = batch_id,
+               template_html = template_html_file
                ),
              format="file") # create the content as html
 )
@@ -52,6 +61,9 @@ list(
   
   #this links to the email template file, an R markdown file
   tar_target(template_file,config$template_file, format = "file"),
+  
+  #this links to the html template file
+  tar_target(template_html_file,paste0(getwd(),"/",config$template_html_file), format = "file"),
   
   #this links to the computation file applied to all data
   tar_target(computation_file,config$computation_script_bg, format = "file"),

@@ -3,6 +3,7 @@ make_meta_table <- function(x,batch_id){
   
   x <- stack(x)
   names(x) <- c("html_file","descriptor")
+  
   write.csv(x, file_name,row.names = F)
   
   file_name

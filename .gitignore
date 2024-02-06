@@ -5,3 +5,5 @@
 
 rosm.cache
 templates/rosm.cache
+
+.Renviron

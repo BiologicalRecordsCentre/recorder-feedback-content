@@ -1,4 +1,4 @@
-render_content <- function(template_file,user_params,user_id,batch_id){
+render_content <- function(template_file,user_params,user_id,batch_id,template_html){
 
   # build a uniaue file name
   filename <- basename(template_file) # Use basename to get the filename with extension
@@ -34,13 +34,24 @@ render_content <- function(template_file,user_params,user_id,batch_id){
       )
     )
   }
- 
+  
+  #set a temp directory for intermediate files in rendering
+  temporary_directory <- tempdir() #per session temp directory
+  
   #render the content
   render(template_file,
          output_file = out_file,
          output_dir = paste0("renders/",batch_id),
+         output_format = email_format(template_html=template_html),
          params = user_params,
-         quiet=T)
+         quiet=T,
+         intermediates_dir = temporary_directory,
+         knit_root_dir = temporary_directory,
+         envir = new.env()
+         )
+  
+  #delete the temporary director
+  unlink(temporary_directory, recursive = TRUE)
   
   #return the file name as in targets we're using format="file"
   paste0("renders/",batch_id,"/",out_file)
