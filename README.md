@@ -67,3 +67,43 @@ Produce your R markdown and save it in the `templates` folder. Use `example.Rmd`
 ### Test it out
 
 Generate some emails using simulated or real data.
+
+
+## Getting started
+
+Fork the repository
+
+![image](https://github.com/BiologicalRecordsCentre/recorder-feedback/assets/17750766/dc4941bb-eff5-470e-8acd-cba16cddad4f)
+
+Clone the your fork locally
+
+```
+git clone https://github.com/your-github-username/recorder-feedback.git`
+```
+
+Now in R (using your prefered R IDE) install requirements in R (will use renv for package management in future)
+
+```
+install.packages(c("targets","tarchetypes","rmarkdown","dplyr","ggplot2","crew","config","ggspatial","prettymapr"))
+```
+
+Generate some test data
+
+```
+source("R/generate_test_data.R")
+```
+
+Run the targets pipeline
+
+```
+targets::tar_make()
+```
+
+View the 5 of renders you have just produced
+
+```
+source("R/view_renders.R")
+view_renders(batch_id="test_001",5)
+```
+
+Now you've got it set up with the example email, edit the template and other scripts to generate your desired personalised feedback items.
