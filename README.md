@@ -1,6 +1,6 @@
 # Recorder Feedback
 
-Scripts for generating informative feedback for biological recorders
+Scripts for generating feedback and "data stories" for biological recorders
 
 ## Overview
 
@@ -30,7 +30,7 @@ The email rendering is done using R markdown. R markdown is used as a very flexi
 
 Content in the emails can be generated using frequently R packages such as dplyr for data manipulation and ggplot2 for creating data visualisations. There are various R packages available for generating maps but there are example scripts that use ggspatial.
 
-The emails are rendered in an email-ready format specified from the R package blastula. The blastula package makes it easy to produce and send HTML email from R. They are rendered as 'self contained' html files so there are no external local image files.
+The emails are rendered in an email-ready format borrowed from the R package blastula. They are rendered as 'self contained' html files so there are no external local image files.
 
 It is not recommended to carry out computationally heavy calculations within the R markdown template, therefore a computation step can be done before rendering. These computations should be coded in scripts located in `R/computations`. The computations are applied separately for the `user_data` and `bg_data`, but this can be the same or different computation scripts.
 
@@ -38,70 +38,118 @@ A configuration file (`config.yml`), which is loaded in using `config::get()`, i
 
 The rendered html items are saved in a folder `renders/[batch_id]` where you have set a batch identifier. The folder contains html files for each recipient and a `.csv` with columns for each file name and the identifier.
 
-## Development process
+## Development Process
+The development process for creating informative feedback for biological recorders involves several key stages to ensure the effectiveness and relevance of the generated feedback. Follow these steps to streamline the development process:
 
-### Ask youself "why?": identify your need for recorder feedback
+### 1. Define Feedback Objectives
+Begin by clearly defining the objectives and motivations behind providing feedback to biological recorders. Consider the following questions:
 
-First, it is important to determine why do we need to send recorder feedback. Some example motivations include:
+ * What specific goals do you aim to achieve with the feedback?
+ * Who are the target recipients of the feedback, and what are their needs and preferences?
+ * How will the feedback contribute to improving data quality and engagement?
 
- * To encourage more recording in general
- * To encourage a specific type of recording
- * Targeted recording in space/time/taxonomy
+Ensure that every design and coding decision aligns with the core motivations identified in this stage.
 
-Every design/coding decision should point back to this core motivation.
+### 2. Conceptualization
+Before diving into coding, take the time to conceptualize the feedback content and format. Consider the following aspects:
 
-### Conceptualisation
+ * What types of feedback will be most impactful for the target audience?
+ * What visual and textual content will be included in the feedback?
+ * How can you effectively communicate the value of the feedback to the recorders?
 
-Before coding anything think about what feedback you want to send to recorder, what might it look like, what sort of visuals/text content might you need?
+Brainstorm ideas and outline the structure of the feedback to guide the development process.
 
-### Computational requirements
+### 3. Determine Computational Requirements
+Identify the computational tasks required to generate the feedback items. This may involve:
 
-What computations do you need to do in order to produce the feedback items. For example do you need to calculate metrics (e.g. averages) from the background data to compare the user data to? Develop these computations and write scripts in the `R/computations` folder.
+ * Calculating metrics or statistics from the background data for comparison.
+ * Processing and formatting the input data to generate user-specific feedback.
+ * Developing scripts for data manipulation, visualization, and analysis.
 
-### Design content and format email template
+Create scripts for these computations and organize them in the designated R/computations folder.
 
-Produce your R markdown and save it in the `templates` folder. Use `example.Rmd` for inspiration. Adapt the `basic_template.html` in templates_html folder in case you want to ajust the look and feel of the emails.
+### 4. Design Email Template
+Develop the email template using R Markdown to present the feedback in a visually appealing and informative manner. Consider the following elements:
 
-### Test it out
+ * Incorporate user-specific data and computed metrics using parameterized R Markdown.
+ * Use R packages such as dplyr for data manipulation and ggplot2 for data visualization.
+ * Ensure that the template adheres to best practices for email rendering and readability.
+   
+Adapt the provided example.Rmd and basic_template.html as needed to customize the look and feel of the emails.
 
-Generate some emails using simulated or real data.
+### 5. Testing and Iteration
+Generate test emails using simulated or real data to evaluate the effectiveness of the feedback generation process. Consider the following aspects during testing:
+
+ * Verify the accuracy and relevance of the generated feedback.
+ * Assess the visual appeal and readability of the email template.
+ * Solicit feedback from stakeholders or test users for further improvements.
+
+Iterate on the design and content of the feedback based on testing results and user feedback to ensure that it meets the desired objectives.
+
+By following these structured steps, you can systematically develop informative feedback for biological recorders, ultimately improving data quality and engagement within the community.
 
 ## Getting started
 
-Fork the repository
+### Fork the repository
+
+Start by forking the Recorder Feedback repository on GitHub. This will create a copy of the project under your GitHub account, allowing you to make changes and contributions without affecting the original repository.
 
 ![image](https://github.com/BiologicalRecordsCentre/recorder-feedback/assets/17750766/dc4941bb-eff5-470e-8acd-cba16cddad4f)
 
-Clone the your fork locally
+### Clone the repo locally
+
+Clone your forked repository to your local machine using Git. Open a terminal or command prompt and execute the following command:
 
 ```
 git clone https://github.com/your-github-username/recorder-feedback.git`
 ```
 
-Now in R (using your prefered R IDE) install requirements in R using renv
+Clone your forked repository to your local machine using Git. Open a terminal or command prompt and execute the following command:
+
+### Install required packages using {renv}
+
+Navigate to the project directory and install the necessary R packages using the renv package manager. Open R or RStudio and execute the following commands:
 
 ```
 install.packages(c("renv"))
 renv::restore()
 ```
 
-Generate some test data
+This will ensure that you have all the required packages installed and ready to use for generating feedback.
+
+### Generate test data
+
+Run the provided script generate_test_data.R to generate test data for email rendering. Execute the following command in R or RStudio:
 
 ```
 source("R/generate_test_data.R")
 ```
 
-Run the targets pipeline
+This script will create sample data that you can use to test the email generation process.
+
+### Run the targets pipeline
+
+Execute the targets pipeline to generate feedback emails based on the test data. Run the following command in R or RStudio:
 
 ```
 targets::tar_make()
 ```
 
-View the 5 of renders you have just produced
+This will trigger the email generation process based on the specified computations and template.
+
+### View generated emails
+
+Once the targets pipeline has completed, you can view the generated email renders. Execute the following command in R or RStudio:
 
 ```
 source("R/view_renders.R")
 view_renders(batch_id="test_001",5)
 ```
 
-Now you've got it set up with the example email, edit the template and other scripts to generate your desired personalised feedback items.
+Replace "test_001" with the batch identifier you set, and n with the number of renders you want to view.
+
+### Customize Feedback Items
+
+Now that you have the project set up and have generated test feedback, you can customize the email template and scripts to generate personalized feedback items according to your specific requirements. Edit the template (example.Rmd) and other scripts as needed to tailor the feedback content and format.
+
+By following these steps, you can quickly set up the project environment and start generating informative feedback for biological recorders.
