@@ -3,5 +3,5 @@ default:
   data_file: "data/simulated_data_raw.csv"
   computation_script_bg: "R/computations/computations_example.R"
   computation_script_user: "R/computations/computations_example.R"
-  template_file: "templates/example.Rmd"
+  default_template_file: "templates/example.Rmd"
   template_html_file: "templates_html/basic_template.html"

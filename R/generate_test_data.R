@@ -10,10 +10,14 @@ generate_participants <- function(n_participants){
   
   names <- paste(sample(first_names,n_participants,replace = T),sample(surnames,n_participants,replace = T))
   
-  data.frame(user_id= 1:n_participants,name = names,email = paste0(gsub(" ",".",names),"@email.com"))
+  data.frame(user_id= 1:n_participants,
+             name = names,
+             email = paste0(gsub(" ",".",names),"@email.com")#,
+             #template_file="templates/example.Rmd"
+             )
 }
 
-simulated_participants <- generate_participants(30)
+simulated_participants <- generate_participants(4)
 write.csv(simulated_participants,"data/simulated_participants.csv",row.names = F)
 
 
@@ -46,11 +50,11 @@ generate_wildlife_data <- function(start_date, end_date, num_records,participant
 }
 
 # Set start and end dates
-start_date <- as.Date("2024-01-01")
-end_date <- as.Date("2024-01-31")
+start_date <- as.Date("2024-06-01")
+end_date <- as.Date("2024-06-30")
 
 # Generate simulated wildlife recording data
-simulated_data <- generate_wildlife_data(start_date, end_date, num_records = 1000,simulated_participants)
+simulated_data <- generate_wildlife_data(start_date, end_date, num_records = 100,simulated_participants)
 
 
 simulated_data

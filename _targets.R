@@ -1,5 +1,6 @@
 library(targets)
 library(tarchetypes)
+library(assertr)
 
 #distributed computing set up
 library(crew)
@@ -16,12 +17,23 @@ source("R/make_meta_table.R")
 source("R/look_for_computed_objects.R")
 source("R/email_format.R")
 
+#read in data files
 #get configuration from config.yml
 config <- config::get()
+users <- read.csv(config$participant_data_file) #user data
+data_file <- read.csv(config$data_file) #raw species data
+
+# if no template file then add in the default one
+if(!("template_file"%in% names(users))){
+  users$template_file <- config$default_template_file
+}
+
+#assertions to ensure the data is all there
+users |> verify(has_all_names("user_id", "name", "email"))
+data_file |> verify(has_all_names("latitude","longitude","species","date"))
 
 #set up static branching by user
-users <- read.csv(config$participant_data_file) #read data
-names(users) <- paste0(names(users),"_")
+names(users) <- paste0(names(users),"_") #apply an underscore to after the name to differentiate it
 values <- users #values for static branching
 
 #batch identifier
@@ -36,6 +48,9 @@ mapping <- tar_map(
   
   #do any computations on the user data
   tar_target(user_computed_objects,do_computations(computation = computation_file_user, records_data=user_data)),
+  
+  #this links to the email template file, an R markdown file
+  tar_target(template_file,template_file_, format = "file"),
   
   #render the content
   tar_target(data_story_content, 
@@ -58,9 +73,6 @@ mapping <- tar_map(
 list(
   #this links to the full (all records) data file
   tar_target(raw_data_file, config$data_file, format = "file"),
-  
-  #this links to the email template file, an R markdown file
-  tar_target(template_file,config$template_file, format = "file"),
   
   #this links to the html template file
   tar_target(template_html_file,paste0(getwd(),"/",config$template_html_file), format = "file"),
