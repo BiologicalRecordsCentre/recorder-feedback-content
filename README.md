@@ -56,18 +56,15 @@ Before coding anything think about what feedback you want to send to recorder, w
 
 ### Computational requirements
 
-What computations do you need to do in order to produce the feedback items. For example do you need to calculate metrics (e.g. averages) from the background data to compare the user data to?
+What computations do you need to do in order to produce the feedback items. For example do you need to calculate metrics (e.g. averages) from the background data to compare the user data to? Develop these computations and write scripts in the `R/computations` folder.
 
-Develop these computations and write scripts in the `R/computations` folder.
+### Design content and format email template
 
-### Design email template
-
-Produce your R markdown and save it in the `templates` folder. Use `example.Rmd` for inspiration.
+Produce your R markdown and save it in the `templates` folder. Use `example.Rmd` for inspiration. Adapt the `basic_template.html` in templates_html folder in case you want to ajust the look and feel of the emails.
 
 ### Test it out
 
 Generate some emails using simulated or real data.
-
 
 ## Getting started
 
@@ -81,10 +78,11 @@ Clone the your fork locally
 git clone https://github.com/your-github-username/recorder-feedback.git`
 ```
 
-Now in R (using your prefered R IDE) install requirements in R (will use renv for package management in future)
+Now in R (using your prefered R IDE) install requirements in R using renv
 
 ```
-install.packages(c("targets","tarchetypes","rmarkdown","dplyr","ggplot2","crew","config","ggspatial","prettymapr"))
+install.packages(c("renv"))
+renv::restore()
 ```
 
 Generate some test data
