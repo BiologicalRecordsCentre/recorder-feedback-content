@@ -33,12 +33,12 @@ This code is not well suited for 'on-the-fly' feedback delivered to a recorder w
  * Email generation pipeline managed by R package {targets}
  * Email content and rendering managed using R markdown
  * You need to provide:
-  * Input data as .csv
-  * Functions for any computations you wish to do on this data before rendering the email (eg. calculating summary statistics)
-  * An parametrised R markdown file which uses markdown and R code to transform the data and computed objects into effective digital engagements.
-  * A HTML template used by the rendering process to format the final HTML output
-  * a configuration file (`config.yml`) containing information about all of the above
- * Rendered items saved in `renders/[batch_id]` folder with recipient-specific HTML files and a .csv metadata file
+   * Input data as .csv
+   * Functions for any computations you wish to do on this data before rendering the email (eg. calculating summary statistics)
+   * An parametrised R markdown file which uses markdown and R code to transform the data and computed objects into effective digital engagements.
+   * A HTML template used by the rendering process to format the final HTML output
+   * a configuration file (`config.yml`) containing information about all of the above
+ * Rendered items are saved in `renders/[batch_id]` folder with recipient-specific HTML files and a .csv metadata file
   
 A minimal example of all of these items is included and is demonstrated in the "getting started" part of the documentation: https://biologicalrecordscentre.github.io/recorder-feedback/
 
