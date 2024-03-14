@@ -30,71 +30,17 @@ This code is not well suited for 'on-the-fly' feedback delivered to a recorder w
 
 ## How it works
 
-The email generation process is managed by R package targets. The targets package is a Make-like pipeline tool for statistics and data science in R. The package skips costly runtime for tasks that are already up to date and orchestrates the necessary computation. The pipeline is described in `_targets.R`and triggered using `targets::tar_make()`. You can visualise the dependency graph using `targets::tar_visnetwork()`.
-
-The input data is made available in the `/data` folder. It must be in a certain format in order to work correctly. During the pipeline the data is split into the `user_data` which only includes the species records of the target user and the `bg_data` (background) which is the data for everyone.
-
-The email rendering is done using R markdown. R markdown is used as a very flexible templating system to allow developers to documents in html (and other formats). It combines markdown with code chunks. We use parameterised R markdown to render the email with user-specific data and computed data-derived objects.
-
-Content in the emails can be generated using frequently R packages such as dplyr for data manipulation and ggplot2 for creating data visualisations. There are various R packages available for generating maps but there are example scripts that use ggspatial.
-
-The emails are rendered in an email-ready format borrowed from the R package blastula. They are rendered as 'self contained' html files so there are no external local image files.
-
-It is not recommended to carry out computationally heavy calculations within the R markdown template, therefore a computation step can be done before rendering. These computations should be coded in scripts located in `R/computations`. The computations are applied separately for the `user_data` and `bg_data`, but this can be the same or different computation scripts.
-
-A configuration file (`config.yml`), which is loaded in using `config::get()`, is where you define the data file, the computation scripts and the template file.
-
-The rendered html items are saved in a folder `renders/[batch_id]` where you have set a batch identifier. The folder contains html files for each recipient and a `.csv` with columns for each file name and the identifier.
-
-## Development Process
-The development process for creating informative feedback for biological recorders involves several key stages to ensure the effectiveness and relevance of the generated feedback. Follow these steps to streamline the development process:
-
-### 1. Define Feedback Objectives
-Begin by clearly defining the objectives and motivations behind providing feedback to biological recorders. Consider the following questions:
-
- * What specific goals do you aim to achieve with the feedback?
- * Who are the target recipients of the feedback, and what are their needs and preferences?
- * How will the feedback contribute to improving data quality and engagement?
-
-Ensure that every design and coding decision aligns with the core motivations identified in this stage.
-
-### 2. Conceptualization
-Before diving into coding, take the time to conceptualize the feedback content and format. Consider the following aspects:
-
- * What types of feedback will be most impactful for the target audience?
- * What visual and textual content will be included in the feedback?
- * How can you effectively communicate the value of the feedback to the recorders?
-
-Brainstorm ideas and outline the structure of the feedback to guide the development process.
-
-### 3. Determine Computational Requirements
-Identify the computational tasks required to generate the feedback items. This may involve:
-
- * Calculating metrics or statistics from the background data for comparison.
- * Processing and formatting the input data to generate user-specific feedback.
- * Developing scripts for data manipulation, visualization, and analysis.
-
-Create scripts for these computations and organize them in the designated R/computations folder.
-
-### 4. Design Email Template
-Develop the email template using R Markdown to present the feedback in a visually appealing and informative manner. Consider the following elements:
-
- * Incorporate user-specific data and computed metrics using parameterized R Markdown.
- * Use R packages such as dplyr for data manipulation and ggplot2 for data visualization.
- * Ensure that the template adheres to best practices for email rendering and readability.
-   
-Adapt the provided example.Rmd and basic_template.html as needed to customize the look and feel of the emails.
-
-### 5. Testing and Iteration
-Generate test emails using simulated or real data to evaluate the effectiveness of the feedback generation process. Consider the following aspects during testing:
-
- * Verify the accuracy and relevance of the generated feedback.
- * Assess the visual appeal and readability of the email template.
- * Solicit feedback from stakeholders or test users for further improvements.
-
-Iterate on the design and content of the feedback based on testing results and user feedback to ensure that it meets the desired objectives.
-
-By following these structured steps, you can systematically develop informative feedback for biological recorders, ultimately improving data quality and engagement within the community.
+ * Email generation pipeline managed by R package {targets}
+ * Email content and rendering managed using R markdown
+ * You need to provide:
+  * Input data as .csv
+  * Functions for any computations you wish to do on this data before rendering the email (eg. calculating summary statistics)
+  * An parametrised R markdown file which uses markdown and R code to transform the data and computed objects into effective digital engagements.
+  * A HTML template used by the rendering process to format the final HTML output
+  * a configuration file (`config.yml`) containing information about all of the above
+ * Rendered items saved in `renders/[batch_id]` folder with recipient-specific HTML files and a .csv metadata file
+  
+A minimal example of all of these items is included and is demonstrated in the "getting started" part of the documentation.
 
 ## Getting started
 

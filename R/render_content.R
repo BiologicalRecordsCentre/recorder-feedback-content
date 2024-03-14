@@ -47,7 +47,8 @@ render_content <- function(template_file,user_params,user_id,batch_id,template_h
          quiet=T,
          intermediates_dir = temporary_directory,
          knit_root_dir = temporary_directory,
-         envir = new.env()
+         envir = new.env(),
+         user-email
          )
   
   #delete the temporary director

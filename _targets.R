@@ -23,11 +23,6 @@ config <- config::get()
 users <- read.csv(config$participant_data_file) #user data
 data_file <- read.csv(config$data_file) #raw species data
 
-# if no template file then add in the default one
-if(!("template_file"%in% names(users))){
-  users$template_file <- config$default_template_file
-}
-
 #assertions to ensure the data is all there
 users |> verify(has_all_names("user_id", "name", "email"))
 data_file |> verify(has_all_names("latitude","longitude","species","date"))
@@ -44,19 +39,18 @@ batch_id <- "test_001"
 mapping <- tar_map(
   values = values,
   names = user_id_,
+  
   tar_target(user_data, filter(raw_data,user_id == user_id_)), #generate a df for the user's recording activity
   
   #do any computations on the user data
   tar_target(user_computed_objects,do_computations(computation = computation_file_user, records_data=user_data)),
-  
-  #this links to the email template file, an R markdown file
-  tar_target(template_file,template_file_, format = "file"),
   
   #render the content
   tar_target(data_story_content, 
              render_content(
                template_file = template_file,
                user_params = list(user_name = name_,
+                                  user_email = email_,
                                   user_data = user_data,
                                   user_computed_objects = user_computed_objects,
                                   bg_data = raw_data,
@@ -73,6 +67,9 @@ mapping <- tar_map(
 list(
   #this links to the full (all records) data file
   tar_target(raw_data_file, config$data_file, format = "file"),
+  
+  #this links to the email template file, an R markdown file
+  tar_target(template_file,paste0(getwd(),"/",config$default_template_file), format = "file"),
   
   #this links to the html template file
   tar_target(template_html_file,paste0(getwd(),"/",config$template_html_file), format = "file"),

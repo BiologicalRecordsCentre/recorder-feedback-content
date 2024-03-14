@@ -6,8 +6,10 @@ params:
     bg_data: ""
     bg_computed_objects: ""
     user_computed_objects: ""
+    user_email: "UNKNOWN"
 footer-date-time: "`r  Sys.time()`"
 footer-unsubscribe-link: "www.google.com"
+user-email: "`r params$user_email`"
 ---
 
 ```{r setup, include=FALSE}

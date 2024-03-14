@@ -1,0 +1,175 @@
+---
+title: "Recorder Feedback: Extensible R Code for Generating Effective Digital Engagements for Biological Recorders"
+author: "Simon Rolph"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    theme: flatly
+    toc: yes
+    toc_float:
+      collapsed: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Overview
+
+Biological recorders contribute valuable biodiversity data; and extensive infrastructure exists to support dataflows from recorders submitting records to databases. However, we lack infrastructure dedicated to providing informative feedback to recorders in response to the data they have contributed. By developing this infrastructure, we can create a feedback loop leading to better data and more engaged data providers.
+
+We might want to provide feedback to biological recorders, or other interested parties such as land managers or groups, for a variety of reasons:
+
+ * Increase the volume of species data by improving user engagement
+ * Improve data quality by supporting user skill improvement
+ * Get data where it is needed most by delivering persuasive messaging to encourage species recording in places or taxonomic groups that we need data (adaptive sampling).
+
+The code in this repository is developed to programmatically generating effective digital engagements (‘data stories’) from biodiversity species data. This code provides tools for turning species recording data into data stories in HTML format. Separate scripts will be used to dispatch the HTML content to recipients. We use R markdown as a flexible templating system to provide extensible scripts that allow the development of different digital engagements. This templating system can then be used by data managers to design digital engagements to send to their participants. Attention should be given to ensuring that this software is computationally efficient to ensure that it has the potential to be scaled.
+
+This work inherits some ideas and concept from the MyDECIDE campaign delivered under the DECIDE project. The code and scripts from MyDECIDE are available here: https://github.com/simonrolph/DECIDE-WP3-newsletter/tree/main
+
+## How it works
+
+The email generation process is managed by R package targets. The targets package is a Make-like pipeline tool for statistics and data science in R. The package skips costly runtime for tasks that are already up to date and orchestrates the necessary computation. The pipeline is described in `_targets.R`and triggered using `targets::tar_make()`. You can visualise the dependency graph using `targets::tar_visnetwork()`.
+
+This is a schematic diagram providing an overview of the email generation process. Input data is loaded from an external source (e.g. an Indicia database). For each person/place/project the data is split into the focal data (relating to the person, place or project you which to deliver targeted feedback to) and the background data (all other data). Computations are then applied to these datasets, this might be to calculate summary statistics such as the number of records made in a certain period. The data and the computations are fed into an Rmarkdown document which contains code which you have developed to generate effective digital engagements. A HTML template is also combined here to specify any generic elements such as formatting, header/footers, and logos.
+
+![](img/recorder_feedback_overview.drawio.svg)
+
+
+The input data is made available in the `/data` folder. It must be in a certain format in order to work correctly. During the pipeline the data is split into the `user_data` which only includes the species records of the target user and the `bg_data` (background) which is the data for everyone.
+
+The email rendering is done using R markdown. R markdown is used as a very flexible templating system to allow developers to documents in html (and other formats). It combines markdown with code chunks. We use parameterised R markdown to render the email with user-specific data and computed data-derived objects.
+
+Content in the emails can be generated using frequently R packages such as dplyr for data manipulation and ggplot2 for creating data visualisations. There are various R packages available for generating maps but there are example scripts that use ggspatial.
+
+The emails are rendered in an email-ready format borrowed from the R package blastula. They are rendered as 'self contained' html files so there are no external local image files.
+
+It is not recommended to carry out computationally heavy calculations within the R markdown template, therefore a computation step can be done before rendering. These computations should be coded in scripts located in `R/computations`. The computations are applied separately for the `user_data` and `bg_data`, but this can be the same or different computation scripts.
+
+A configuration file (`config.yml`), which is loaded in using `config::get()`, is where you define the data file, the computation scripts and the template file.
+
+The rendered html items are saved in a folder `renders/[batch_id]` where you have set a batch identifier. The folder contains html files for each recipient and a `.csv` with columns for each file name and the identifier.
+
+## Development Process
+The development process for creating informative feedback for biological recorders involves several key stages to ensure the effectiveness and relevance of the generated feedback. Follow these steps to streamline the development process:
+
+### 1. Define Feedback Objectives
+Begin by clearly defining the objectives and motivations behind providing feedback to biological recorders. Consider the following questions:
+
+ * What specific goals do you aim to achieve with the feedback?
+ * Who are the target recipients of the feedback, and what are their needs and preferences?
+ * How will the feedback contribute to improving data quality and engagement?
+
+Ensure that every design and coding decision aligns with the core motivations identified in this stage.
+
+### 2. Conceptualization
+Before diving into coding, take the time to conceptualize the feedback content and format. Consider the following aspects:
+
+ * What types of feedback will be most impactful for the target audience?
+ * What visual and textual content will be included in the feedback?
+ * How can you effectively communicate the value of the feedback to the recorders?
+
+Brainstorm ideas and outline the structure of the feedback to guide the development process.
+
+### 3. Determine Computational Requirements
+Identify the computational tasks required to generate the feedback items. This may involve:
+
+ * Calculating metrics or statistics from the background data for comparison.
+ * Processing and formatting the input data to generate user-specific feedback.
+ * Developing scripts for data manipulation, visualization, and analysis.
+
+Create scripts for these computations and organize them in the designated R/computations folder.
+
+### 4. Design Email Template
+Develop the email template using R Markdown to present the feedback in a visually appealing and informative manner. Consider the following elements:
+
+ * Incorporate user-specific data and computed metrics using parameterized R Markdown.
+ * Use R packages such as dplyr for data manipulation and ggplot2 for data visualization.
+ * Ensure that the template adheres to best practices for email rendering and readability.
+   
+Adapt the provided example.Rmd and basic_template.html as needed to customize the look and feel of the emails.
+
+### 5. Testing and Iteration
+Generate test emails using simulated or real data to evaluate the effectiveness of the feedback generation process. Consider the following aspects during testing:
+
+ * Verify the accuracy and relevance of the generated feedback.
+ * Assess the visual appeal and readability of the email template.
+ * Solicit feedback from stakeholders or test users for further improvements.
+
+Iterate on the design and content of the feedback based on testing results and user feedback to ensure that it meets the desired objectives.
+
+## Getting started
+
+Provided in this code is a a minimal example to show how it works. This can then be used as a template for developing your own personalised feedback.
+
+### Fork and clone the repository
+
+It is recommeded if you are going developing your own feedback from this code that you fork the repository to your own GitHub account then clone from your newly forked repository.
+
+### Install required R packages
+
+Use renv
+
+
+
+## The pipeline
+
+The pipeline is managed with R package {targets}. You can use `targets::tar_visnetwork()` to view the status of the pipeline. THe pipeline is essentially like this
+
+
+
+
+
+Inputs
+
+ * Raw data
+ * R markdown template
+ * HTML template
+ * Computation script (background)
+ * Computation script (user)
+ 
+Intermediates
+
+ * User data
+ * Computed objects (background)
+ * Computed objects (user)
+
+Outputs
+ * Recorded feedback items
+ * Meta datatablw
+
+Pipeline can be called with a command line prompt. This is useful if you want to trigged the pipeline run as part of a schedule.
+
+```
+Rscript generate_feedback_items.R
+```
+
+## Input data
+
+Input data (the full dataset) must be provided as a csv (comma separated values). The file must have the required columns:
+
+ * 
+
+
+## Computating objects
+
+Presenting simply raw data limits the ability to produce meaningful feedback. Therefore as part of the feedback generation pipeline we compute objects. We define these computations as R functions which take the input data as its argument. The computation functions return a named list of objects which can then be referred to in the R markdown file in order to show to the user.
+
+You can define different computation functions for the background computations and the focal computations, or use the same computation file for each. 
+
+## The R Markdown
+
+The R markdown file is where you will spend the majority of you time developing the feedback you wish to send to recorders. R markdown was chosen as it provides all the facilities of R.
+
+
+
+## The HTML template
+
+The HTML template i
+
+
+
+
+
+
