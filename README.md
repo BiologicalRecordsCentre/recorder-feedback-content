@@ -1,10 +1,8 @@
 # Recorder Feedback via Effective Digital Engagements
 
-Scripts for generating effective digital engagements and "data stories" for biological recorders.
+Extensible code for generating effective digital engagements for biological recorders. Developed in partnership with JNCC as part of the [Natural Capital and Ecosystem Assessment](https://www.gov.uk/government/publications/natural-capital-and-ecosystem-assessment-programme/natural-capital-and-ecosystem-assessment-programme) programme managed by Defra.
 
-This code is developed under the NCEA (Natural Capital and Ecosystem Assessment) program funded by DEFRA.
-
-For further details
+For further details about how to use this code please visit the documentation page: https://biologicalrecordscentre.github.io/recorder-feedback/
 
 ## Overview
 
@@ -25,12 +23,12 @@ This work inherits some ideas and concept from the MyDECIDE campaign delivered u
 This code can be used to generate static feedback items containing retrospective and/or prospective content. This means the content is typically generated periodically, or triggered by specific criteria. Some examples of feedback items:
 
  - A periodic (weekly / monthly / yearly) item reporting recording activity on a past time period
- - A recording 'receipt' sent responsively to a recorder making a visit to a site and observing a perticular species
- - A recording 'forecast' highlighing species that might be able to be observed in a future time period
+ - A recording 'receipt' sent responsively to a recorder making a visit to a site and observing a particular species
+ - A recording 'forecast' highlighting species that might be able to be observed in a future time period
 
-This code is not well suited for 'on-the-fly' feedback delivered to a recorder whilst they are 'in the field' engaging in recording activity. Those sorts of feedback are best delivered directly through recording apps.
+This code is not well suited for 'on-the-fly' feedback delivered to a recorder whilst they are 'in the field' engaging in recording activity. Those sorts of feedback are best delivered directly through recording apps such as iRecord.
 
-## How it works
+## How it works (in summary)
 
  * Email generation pipeline managed by R package {targets}
  * Email content and rendering managed using R markdown
