@@ -1,0 +1,18 @@
+/* Whole document: */
+body{
+  font-family: "Lato", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+  color:#57585A;
+}
+
+h1,h2{
+  font-family: "Montserrat", sans-serif;
+  color:#0483A4;
+  font-weight: 550;
+}
+
+h3,h4,h5,h6{
+  font-family: "Montserrat", sans-serif;
+  color:#A9A9AD;
+}

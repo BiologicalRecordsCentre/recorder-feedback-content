@@ -4,11 +4,15 @@ author: "Simon Rolph"
 date: "`r Sys.Date()`"
 output: 
   html_document:
-    theme: flatly
+    css: style.css
     toc: yes
     toc_float:
       collapsed: false
 ---
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lato&family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -30,9 +34,29 @@ This work inherits some ideas and concept from the MyDECIDE campaign delivered u
 
 ## How it works
 
-The email generation process is managed by R package targets. The targets package is a Make-like pipeline tool for statistics and data science in R. The package skips costly runtime for tasks that are already up to date and orchestrates the necessary computation. The pipeline is described in `_targets.R`and triggered using `targets::tar_make()`. You can visualise the dependency graph using `targets::tar_visnetwork()`.
+The email generation process is managed by R package targets. The targets package is a Make-like pipeline tool for statistics and data science in R. The package skips costly runtime for tasks that are already up to date and orchestrates the necessary computation. The pipeline is described in `_targets.R`. Pipeline inputs and outputs
 
-This is a schematic diagram providing an overview of the email generation process. Input data is loaded from an external source (e.g. an Indicia database). For each person/place/project the data is split into the focal data (relating to the person, place or project you which to deliver targeted feedback to) and the background data (all other data). Computations are then applied to these datasets, this might be to calculate summary statistics such as the number of records made in a certain period. The data and the computations are fed into an Rmarkdown document which contains code which you have developed to generate effective digital engagements. A HTML template is also combined here to specify any generic elements such as formatting, header/footers, and logos.
+**Inputs**
+
+ * Raw data (`.csv`)
+ * R markdown template (`.Rmd`)
+ * HTML template (`.html`)
+ * Computation script - background (`.R`)
+ * Computation script - focal (`.R`)
+ 
+**Intermediates**
+
+ * Focal data
+ * background data
+ * Computed objects - background
+ * Computed objects - focal
+
+**Outputs**
+
+ * Recorder feedback items (`.html`)
+ * Metadata table (`.csv`)
+
+Below is a schematic diagram providing an overview of the email generation process. Input data is loaded from an external source (e.g. an Indicia database). For each person/place/project the data is split into the focal data (relating to the person, place or project you which to deliver targeted feedback to) and the background data (all other data). Computations are then applied to these datasets, this might be to calculate summary statistics such as the number of records made in a certain period. The data and the computations are fed into an Rmarkdown document which contains code which you have developed to generate effective digital engagements. A HTML template is also combined here to specify any generic elements such as formatting, header/footers, and logos.
 
 ![](img/recorder_feedback_overview.drawio.svg)
 
@@ -45,16 +69,18 @@ Content in the emails can be generated using frequently R packages such as dplyr
 
 The emails are rendered in an email-ready format borrowed from the R package blastula. They are rendered as 'self contained' html files so there are no external local image files.
 
-It is not recommended to carry out computationally heavy calculations within the R markdown template, therefore a computation step can be done before rendering. These computations should be coded in scripts located in `R/computations`. The computations are applied separately for the `user_data` and `bg_data`, but this can be the same or different computation scripts.
+It is not recommended to carry out computationally heavy calculations within the R markdown template, therefore a computation step can be done before rendering. These computations should be coded in scripts located in `computations`. The computations are applied separately for the `user_data` and `bg_data`, but this can be the same or different computation scripts.
 
 A configuration file (`config.yml`), which is loaded in using `config::get()`, is where you define the data file, the computation scripts and the template file.
 
 The rendered html items are saved in a folder `renders/[batch_id]` where you have set a batch identifier. The folder contains html files for each recipient and a `.csv` with columns for each file name and the identifier.
 
+All the R code for making the pipeline work is located in the `R` folder, you shouldn't need to edit any of these files.
+
 ## Development Process
 The development process for creating informative feedback for biological recorders involves several key stages to ensure the effectiveness and relevance of the generated feedback. Follow these steps to streamline the development process:
 
-### 1. Define Feedback Objectives
+### 1. Define Objectives 🎯
 Begin by clearly defining the objectives and motivations behind providing feedback to biological recorders. Consider the following questions:
 
  * What specific goals do you aim to achieve with the feedback?
@@ -63,7 +89,7 @@ Begin by clearly defining the objectives and motivations behind providing feedba
 
 Ensure that every design and coding decision aligns with the core motivations identified in this stage.
 
-### 2. Conceptualization
+### 2. Conceptualisation 🧠
 Before diving into coding, take the time to conceptualize the feedback content and format. Consider the following aspects:
 
  * What types of feedback will be most impactful for the target audience?
@@ -72,7 +98,7 @@ Before diving into coding, take the time to conceptualize the feedback content a
 
 Brainstorm ideas and outline the structure of the feedback to guide the development process.
 
-### 3. Determine Computational Requirements
+### 3. Computations 🧮
 Identify the computational tasks required to generate the feedback items. This may involve:
 
  * Calculating metrics or statistics from the background data for comparison.
@@ -81,7 +107,7 @@ Identify the computational tasks required to generate the feedback items. This m
 
 Create scripts for these computations and organize them in the designated R/computations folder.
 
-### 4. Design Email Template
+### 4. Design Content 📊
 Develop the email template using R Markdown to present the feedback in a visually appealing and informative manner. Consider the following elements:
 
  * Incorporate user-specific data and computed metrics using parameterized R Markdown.
@@ -90,7 +116,7 @@ Develop the email template using R Markdown to present the feedback in a visuall
    
 Adapt the provided example.Rmd and basic_template.html as needed to customize the look and feel of the emails.
 
-### 5. Testing and Iteration
+### 5. Testing and Iteration 🚀
 Generate test emails using simulated or real data to evaluate the effectiveness of the feedback generation process. Consider the following aspects during testing:
 
  * Verify the accuracy and relevance of the generated feedback.
@@ -101,75 +127,138 @@ Iterate on the design and content of the feedback based on testing results and u
 
 ## Getting started
 
-Provided in this code is a a minimal example to show how it works. This can then be used as a template for developing your own personalised feedback.
+Provided in this code is a a minimal example to show how it works. This can then be used as a starting point for developing your own personalised feedback. 
 
 ### Fork and clone the repository
 
-It is recommeded if you are going developing your own feedback from this code that you fork the repository to your own GitHub account then clone from your newly forked repository.
+It is recommended if you are going developing your own feedback from this code that you fork the repository to your own GitHub account. Start by forking the Recorder Feedback repository on GitHub. This will create a copy of the project under your GitHub account, allowing you to make changes and contributions without affecting the original repository.
+
+![](https://github.com/BiologicalRecordsCentre/recorder-feedback/assets/17750766/dc4941bb-eff5-470e-8acd-cba16cddad4f)
+
+Clone your forked repository to your local machine using Git. Open a terminal or command prompt and execute the following command:
+
+```
+git clone https://github.com/your-github-username/recorder-feedback.git`
+```
+
+Or alternatively you can use the RStudio IDE to clone the repository to a new project: https://happygitwithr.com/rstudio-git-github.html#clone-the-test-github-repository-to-your-computer-via-rstudio
 
 ### Install required R packages
 
-Use renv
+Navigate to the project directory and install the necessary R packages using the renv package manager. Open R or RStudio and execute the following commands:
 
+```
+install.packages(c("renv"))
+renv::restore()
+```
 
+This will ensure that you have all the required packages installed and ready to use for generating feedback. You can find an introduction to {renv} here: https://rstudio.github.io/renv/articles/renv.html
 
-## The pipeline
+### Generate test data
 
-The pipeline is managed with R package {targets}. You can use `targets::tar_visnetwork()` to view the status of the pipeline. THe pipeline is essentially like this
+To help you get started there is a very minimal example of generating feedback items from some simulated data. Run the provided script generate_test_data.R to generate test data for email rendering. Execute the following command in R or RStudio:
 
+```
+source("R/generate_test_data.R")
+```
 
+This script will create sample data that you can use to test the email generation process. The sample data is saved as `simulated_participants.csv` and `data/simulated_data_raw.csv`.
 
+`simulated_participants.csv`
 
+```{r,echo=F}
+head(read.csv("../data/simulated_participants.csv"))
+```
 
-Inputs
+`data/simulated_data_raw.csv`
 
- * Raw data
- * R markdown template
- * HTML template
- * Computation script (background)
- * Computation script (user)
- 
-Intermediates
+```{r,echo=F}
+head(read.csv("../data/simulated_data_raw.csv"))
+```
 
- * User data
- * Computed objects (background)
- * Computed objects (user)
+### Generating feedback items
 
-Outputs
- * Recorded feedback items
- * Meta datatablw
+Now we've generated the test data we can run the pipeline but before we do let's have a look at the other code required to make the pipeline work. 
 
-Pipeline can be called with a command line prompt. This is useful if you want to trigged the pipeline run as part of a schedule.
+Firstly, the config file:
+
+`config.yml`
+
+```{r,echo=F,warning=F}
+cat(readLines("../config.yml"), sep = '\n')
+```
+
+This file specifies which R/Rmd/HTML files are used in the email generation process. The config file is implemented using R package {config}. The values specified in the config file are loaded in the R code using config. Learn about the package here https://rstudio.github.io/config/articles/introduction.html
+
+`participant_data_file`: The file path for the inut data with the list of participants
+`data_file`: The file path for the the input data containing biological records
+`computation_script_bg`: The file path for the script for computations for the background data
+`computation_script_user`: The file path for the script for computations for the focal data (this could be the same script as computation_script_bg)
+`default_template_file`: The file path for the R markdown file containing the EDE format
+`template_html_file`: The file path for the HTML template containing formatting/header/footer etc.
+
+The computation scripts are located in the `computations` folder. Each script is an R function (which must be called `compute_objects`) which takes either the focal or background data as its argument and returns a named list of computed objects. These objects can then be used in the R markdown file. For example here is the example computations provided in `computations_example.R`. 
+
+```{r,echo=F,warning=F}
+cat(readLines("../computations/computations_example.R"), sep = '\n')
+```
+
+If you don't need any computations then you can set `computation_script_bg: computations/computations_none.R` which provides a dummy function:
+
+```{r,echo=F,warning=F}
+cat(readLines("../computations/computations_none.R"), sep = '\n')
+```
+
+The data (focal and background) and the computed objects (focal and background) are all used in the rendering the final HTML feedback item. Please take a look at the example template provided in [`templates/example.Rmd`](https://github.com/BiologicalRecordsCentre/recorder-feedback/blob/main/templates/example.Rmd). Essentially you can us any R code you might use in analyses or data visualisation can be used here. However, please be aware that slower more complex R code will increase the time it takes to generate feedback. Some key principles:
+
+ * The computed objects are passed to the R markdown as parameters which you can access using `params$bg_computed_objects` or `params$user_computed_objects`. Note that these are the named list objects so if within this you defined it as `list(number_of_records=323)` then in order to access this in the R markdown you'd use `params$bg_computed_objects$number_of_records`. 
+ * You can use inline R code: https://rmarkdown.rstudio.com/lesson-4.html
+
+The HTML template [`templates_html/basic_templatehtml`](https://github.com/BiologicalRecordsCentre/recorder-feedback/blob/main/templates_html/basic_template.html) contains the formatting for the email. You only need to edit this if you whish to change the look and feel of the emails.
+
+Finally, now we've had a look at all the components that are used in the pipeline, you can trigger the pipeline using `targets::tar_make()` or `source(generate_feedback_items.R`). Pipeline can be called with a command line prompt. This is useful if you want to trigged the pipeline run as part of a schedule (eg a CRON job).
 
 ```
 Rscript generate_feedback_items.R
 ```
 
-## Input data
+### View generated emails
 
-Input data (the full dataset) must be provided as a csv (comma separated values). The file must have the required columns:
+Once the targets pipeline has completed, you can view the generated email renders. Execute the following command in R or RStudio:
 
- * 
+```
+source("R/view_renders.R")
+view_renders(batch_id="test_001",5)
+```
 
+Replace "test_001" with the batch identifier you set, and n with the number of renders you want to view.
 
-## Computating objects
+## Development details
 
-Presenting simply raw data limits the ability to produce meaningful feedback. Therefore as part of the feedback generation pipeline we compute objects. We define these computations as R functions which take the input data as its argument. The computation functions return a named list of objects which can then be referred to in the R markdown file in order to show to the user.
+Now that you have the project set up and have generated test feedback, you can customize the email template and scripts to generate personalized feedback items according to your specific requirements. Edit the template (example.Rmd) and other scripts as needed to tailor the feedback content and format. By following the following steps, you can quickly set up the project environment and start generating informative feedback for biological recorders.
 
-You can define different computation functions for the background computations and the focal computations, or use the same computation file for each. 
+### Input data
 
-## The R Markdown
+Input data (the full dataset) must be provided as a csv (comma separated values). The columns within the data are up to you but for consistency we recommend using Darwin Core terms: https://dwc.tdwg.org/terms/#occurrence & https://dwc.tdwg.org/terms/#location
 
-The R markdown file is where you will spend the majority of you time developing the feedback you wish to send to recorders. R markdown was chosen as it provides all the facilities of R.
+The columns you specify here (or have been speficied by whatever data source you are using) must then be used in the computation scripts and R markdown template. 
 
+### Computating objects
 
+Presenting simply raw data limits the ability to produce meaningful feedback. Therefore as part of the feedback generation pipeline we compute objects. We define these computations as R functions which take the input data as its argument. The computation functions return a named list of objects which can then be referred to in the R markdown file in order to show to the user. You can define different computation functions for the background computations and the focal computations, or use the same computation file for each. 
 
-## The HTML template
+### The R Markdown
 
-The HTML template i
+The R markdown file is where you will spend the majority of you time developing the feedback you wish to send to recorders. R markdown was chosen as it provides all the facilities of R. If you need to use additional R packages please ensure that you update your `renv.lock` file to capture this.
 
+### The HTML template
 
+The basic HTML template provided is lifted from R package {blastula} and provides formatting such as a container and headers/footers. If you want to change the look and feel of your feedback items you should copy the basic template and rename your copy to `custom_template.html`. You can edit the look and feel of the content by editing the css contained within the `<style>` tags in the html. You then need to edit `config.yml` to ensure that your new template is being used in your pipeline.
 
+## Examples
 
+Here are some examples showing what sort of feedback items are possible.
 
+[Demonstrator](examples/example_demonstrator.html) - This is simply an example of the different elements you can combine together using R markdown; plots, maps and images.
 
+[Month in review](examples/example_month_in_review.html) - This is an example of a 'month in review' retrospective feedback piece.

@@ -4,6 +4,8 @@ Scripts for generating effective digital engagements and "data stories" for biol
 
 This code is developed under the NCEA (Natural Capital and Ecosystem Assessment) program funded by DEFRA.
 
+For further details
+
 ## Overview
 
 Biological recorders contribute valuable biodiversity data; and extensive infrastructure exists to support dataflows from recorders submitting records to databases. However, we lack infrastructure dedicated to providing informative feedback to recorders in response to the data they have contributed. By developing this infrastructure, we can create a feedback loop leading to better data and more engaged data providers.
@@ -40,70 +42,5 @@ This code is not well suited for 'on-the-fly' feedback delivered to a recorder w
   * a configuration file (`config.yml`) containing information about all of the above
  * Rendered items saved in `renders/[batch_id]` folder with recipient-specific HTML files and a .csv metadata file
   
-A minimal example of all of these items is included and is demonstrated in the "getting started" part of the documentation.
+A minimal example of all of these items is included and is demonstrated in the "getting started" part of the documentation: https://biologicalrecordscentre.github.io/recorder-feedback/
 
-## Getting started
-
-### Fork the repository
-
-Start by forking the Recorder Feedback repository on GitHub. This will create a copy of the project under your GitHub account, allowing you to make changes and contributions without affecting the original repository.
-
-![image](https://github.com/BiologicalRecordsCentre/recorder-feedback/assets/17750766/dc4941bb-eff5-470e-8acd-cba16cddad4f)
-
-### Clone the repo locally
-
-Clone your forked repository to your local machine using Git. Open a terminal or command prompt and execute the following command:
-
-```
-git clone https://github.com/your-github-username/recorder-feedback.git`
-```
-
-Clone your forked repository to your local machine using Git. Open a terminal or command prompt and execute the following command:
-
-### Install required packages using {renv}
-
-Navigate to the project directory and install the necessary R packages using the renv package manager. Open R or RStudio and execute the following commands:
-
-```
-install.packages(c("renv"))
-renv::restore()
-```
-
-This will ensure that you have all the required packages installed and ready to use for generating feedback.
-
-### Generate test data
-
-Run the provided script generate_test_data.R to generate test data for email rendering. Execute the following command in R or RStudio:
-
-```
-source("R/generate_test_data.R")
-```
-
-This script will create sample data that you can use to test the email generation process.
-
-### Run the targets pipeline
-
-Execute the targets pipeline to generate feedback emails based on the test data. Run the following command in R or RStudio:
-
-```
-targets::tar_make()
-```
-
-This will trigger the email generation process based on the specified computations and template.
-
-### View generated emails
-
-Once the targets pipeline has completed, you can view the generated email renders. Execute the following command in R or RStudio:
-
-```
-source("R/view_renders.R")
-view_renders(batch_id="test_001",5)
-```
-
-Replace "test_001" with the batch identifier you set, and n with the number of renders you want to view.
-
-### Customize Feedback Items
-
-Now that you have the project set up and have generated test feedback, you can customize the email template and scripts to generate personalized feedback items according to your specific requirements. Edit the template (example.Rmd) and other scripts as needed to tailor the feedback content and format.
-
-By following these steps, you can quickly set up the project environment and start generating informative feedback for biological recorders.
