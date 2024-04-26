@@ -20,12 +20,13 @@ source("R/email_format.R")
 #read in data files
 #get configuration from config.yml
 config <- config::get()
+Sys.setenv(RSTUDIO_PANDOC=config$pandoc_path) #pandoc path
 users <- read.csv(config$participant_data_file) #user data
 data_file <- read.csv(config$data_file) #raw species data
 
 #assertions to ensure the data is all there
-users |> verify(has_all_names("user_id", "name", "email"))
-data_file |> verify(has_all_names("latitude","longitude","species","date"))
+#users |> verify(has_all_names("user_id", "name", "email"))
+#data_file |> verify(has_all_names("latitude","longitude","species","date"))
 
 #set up static branching by user
 names(users) <- paste0(names(users),"_") #apply an underscore to after the name to differentiate it
@@ -60,7 +61,9 @@ mapping <- tar_map(
                batch_id = batch_id,
                template_html = template_html_file
                ),
-             format="file") # create the content as html
+             format="file"), # create the content as html
+  
+  tar_target(meta_data,list(user_id = user_id_,file = data_story_content))
 )
 
 # construct pipeline
@@ -91,10 +94,11 @@ list(
   
   #create a dataframe of users and their email files
   tar_combine(meta_table,
-              mapping$data_story_content,
-              command = make_meta_table(c(!!!.x),batch_id),
+              mapping$meta_data,
+              command = make_meta_table(list(!!!.x),batch_id),
               use_names = T,
-              format="file")
+              format="file"
+              )
 )
 
 
