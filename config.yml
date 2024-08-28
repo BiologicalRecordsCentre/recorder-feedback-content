@@ -5,3 +5,4 @@ default:
   computation_script_user: "computations/computations_example.R"
   default_template_file: "templates/example.Rmd"
   template_html_file: "templates_html/basic_template.html"
+  pandoc_path: "C:/Program Files/RStudio/resources/app/bin/quarto/bin/tools"
