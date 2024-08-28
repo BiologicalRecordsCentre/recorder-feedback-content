@@ -33,8 +33,7 @@ names(users) <- paste0(names(users),"_") #apply an underscore to after the name 
 values <- users #values for static branching
 
 #batch identifier
-batch_id <- format(Sys.time(),"%s")
-batch_id <- "test_001"
+batch_id <- Sys.getenv("BATCH_ID")
 
 # mapping for static branching
 mapping <- tar_map(

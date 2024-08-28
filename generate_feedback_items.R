@@ -1,7 +1,8 @@
+args <- commandArgs(TRUE)
+batch_id <- args[1]
+
 # This is a script that can be run from command line (e.g. on a schedule) 
-print(getwd())
 setwd("./R/myrecord_weekly")
-print(getwd())
 
 if(!require(renv)){
   install.packages("renv",repos='http://cran.r-project.org')
@@ -12,5 +13,11 @@ if(!require(renv)){
 source("renv/activate.R")
 renv::restore()
 
+# Set an environment variable in R for the batch code
+Sys.setenv(BATCH_ID = batch_id)
+
 # run the pipeline
 targets::tar_make()
+
+#and unset the variable
+Sys.unsetenv("BATCH_ID")
