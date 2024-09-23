@@ -1,6 +1,5 @@
 library(httr)
 library(jsonlite)
-library(config)
 library(curl)
 
 config <- config::get()
@@ -51,4 +50,4 @@ for (i in 1:nrow(subscribers_df)){
 records_data
 
 #save the data
-write.csv(subscribers_df,config$data_file,row.names = F)
+write.csv(records_data,config$data_file,row.names = F)
