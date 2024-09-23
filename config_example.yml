@@ -8,3 +8,7 @@ default:
   pandoc_path: "C:/Program Files/RStudio/resources/app/bin/quarto/bin/tools"
   controller_app_base_url: ""
   controller_app_api_key: ""
+  indicia_warehouse_base_url: ""
+  indicia_warehouse_client_id: ""
+  indicia_warehouse_secret: ""
+  

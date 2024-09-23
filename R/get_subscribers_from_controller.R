@@ -16,6 +16,8 @@ get_subscribers_from_controller <- function(api_url, email_list_id, api_token) {
   
   # Convert the list of subscribers to a data frame
   subscribers_df <- as.data.frame(data$subscribers)
+  subscribers_df <- subscribers_df[, c(2,4,1)] 
+  names(subscribers_df)[1] <- "user_id"
   
   return(subscribers_df)
 }
