@@ -7,3 +7,5 @@ rosm.cache
 templates/rosm.cache
 
 .Renviron
+
+config.yml
