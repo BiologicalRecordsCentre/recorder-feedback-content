@@ -1,10 +1,10 @@
-# Recorder Feedback via Effective Digital Engagements
+![](https://github.com/BiologicalRecordsCentre/recorder-feedback/blob/main/Recorder%20feedback%20logo_small.png?raw=true)  
 
-Extensible code for generating effective digital engagements for biological recorders. Developed in partnership with JNCC as part of the [Natural Capital and Ecosystem Assessment](https://www.gov.uk/government/publications/natural-capital-and-ecosystem-assessment-programme/natural-capital-and-ecosystem-assessment-programme) programme managed by Defra.
+# Generating Recorder Feedback Content
 
-For further details about how to use this code please visit the documentation page: https://biologicalrecordscentre.github.io/recorder-feedback-content/
+Part of the Recorder Feedback system: https://github.com/BiologicalRecordsCentre/recorder-feedback
 
-See https://github.com/BiologicalRecordsCentre/recorder-feedback for more details about recorder feedback.
+Extensible code for generating effective digital engagements for biological recorders. Developed in partnership with JNCC as part of the [Natural Capital and Ecosystem Assessment](https://www.gov.uk/government/publications/natural-capital-and-ecosystem-assessment-programme/natural-capital-and-ecosystem-assessment-programme) programme managed by Defra. For further details about how to use this code please visit the documentation page: https://biologicalrecordscentre.github.io/recorder-feedback-content/
 
 ## Overview
 
