@@ -1,3 +1,4 @@
+# This script automates the process of retrieving subscriber information from an email list and their corresponding biodiversity records from the Indicia data warehouse. First, it loads necessary libraries, sources helper functions (get_records_from_indicia and get_subscribers_from_controller), and retrieves subscribers from a specified email list using the API. It then saves the subscriber data into a CSV file. For each subscriber, the script fetches their most recent species records from Indicia by looping through the subscriber list. For each user, it processes and extracts relevant information like species, vernacular names, coordinates, and observation dates, appending the results to a master data frame. Finally, the script saves the compiled species data to another CSV file.
 library(httr)
 library(jsonlite)
 library(curl)

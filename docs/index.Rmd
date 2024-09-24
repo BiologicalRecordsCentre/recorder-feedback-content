@@ -1,5 +1,5 @@
 ---
-title: "Recorder Feedback: Extensible R Code for Generating Effective Digital Engagements for Biological Recorders"
+title: "Generating Recorder Feedback Content"
 author: "Simon Rolph"
 date: "`r Sys.Date()`"
 output: 
@@ -79,54 +79,6 @@ The rendered html items are saved in a folder `renders/[batch_id]` where you hav
 
 All the R code for making the pipeline work is located in the `R` folder, you shouldn't need to edit any of these files.
 
-## Development Process
-The development process for creating informative feedback for biological recorders involves several key stages to ensure the effectiveness and relevance of the generated feedback. Follow these steps to streamline the development process:
-
-### 1. Define Objectives 🎯
-Begin by clearly defining the objectives and motivations behind providing feedback to biological recorders. Consider the following questions:
-
- * What specific goals do you aim to achieve with the feedback?
- * Who are the target recipients of the feedback, and what are their needs and preferences?
- * How will the feedback contribute to improving data quality and engagement?
-
-Ensure that every design and coding decision aligns with the core motivations identified in this stage.
-
-### 2. Conceptualisation 🧠
-Before diving into coding, take the time to conceptualize the feedback content and format. Consider the following aspects:
-
- * What types of feedback will be most impactful for the target audience?
- * What visual and textual content will be included in the feedback?
- * How can you effectively communicate the value of the feedback to the recorders?
-
-Brainstorm ideas and outline the structure of the feedback to guide the development process.
-
-### 3. Computations 🧮
-Identify the computational tasks required to generate the feedback items. This may involve:
-
- * Calculating metrics or statistics from the background data for comparison.
- * Processing and formatting the input data to generate user-specific feedback.
- * Developing scripts for data manipulation, visualization, and analysis.
-
-Create scripts for these computations and organize them in the designated R/computations folder.
-
-### 4. Design Content 📊
-Develop the email template using R Markdown to present the feedback in a visually appealing and informative manner. Consider the following elements:
-
- * Incorporate user-specific data and computed metrics using parameterized R Markdown.
- * Use R packages such as dplyr for data manipulation and ggplot2 for data visualization.
- * Ensure that the template adheres to best practices for email rendering and readability.
-   
-Adapt the provided example.Rmd and basic_template.html as needed to customize the look and feel of the emails.
-
-### 5. Testing and Iteration 🚀
-Generate test emails using simulated or real data to evaluate the effectiveness of the feedback generation process. Consider the following aspects during testing:
-
- * Verify the accuracy and relevance of the generated feedback.
- * Assess the visual appeal and readability of the email template.
- * Solicit feedback from stakeholders or test users for further improvements.
-
-Iterate on the design and content of the feedback based on testing results and user feedback to ensure that it meets the desired objectives.
-
 ## Getting started
 
 Provided in this code is a a minimal example to show how it works. This can then be used as a starting point for developing your own personalised feedback. 
@@ -178,26 +130,95 @@ head(read.csv("../data/simulated_participants.csv"))
 head(read.csv("../data/simulated_data_raw.csv"))
 ```
 
+### Get participant data from controller app
+
+Here we provide an example script and functions for getting data from a controller app, see: https://github.com/BiologicalRecordsCentre/recorder-feedback-controller for more details.
+
+This repository includes the `get_subscribers_from_controller` function, in order to use it follow these steps:
+
+Ensure that you have the necessary libraries and configuration settings in place:
+
+ * Libraries: The function uses `httr` for HTTP requests and `jsonlite` for parsing JSON responses. These should already be available when using renv for package management
+ * API Endpoint: You need a deployed Recorder Feedback Controller app and have access to its API that provides subscriber information.
+ * API Token: This token is required to authenticate your requests to the API, this will be configured in your controller app.
+ * List ID: The unique ID for the email list from which you want to retrieve subscribers, this will be configured in your controller app.
+
+You need to provide the following parameters for the config:
+
+```r
+controller_app_base_url: "https://api.your-email-service.com/"
+controller_app_api_key: "your_api_token"
+participant_data_file: "path/to/save/subscribers.csv"
+```
+
+Now you can use the `get_subscribers_from_controller` function to fetch subscribers from a specific email list.
+
+Example Code:
+```r
+# Load required libraries
+library(httr)
+library(jsonlite)
+library(config)
+
+# Load configuration settings (from config.yml file or manually define them)
+config <- config::get()
+
+# Example parameters
+api_url <- config$controller_app_base_url  # Base URL for your email service API
+api_token <- config$controller_app_api_key # API token for authentication
+email_list_id <- "1"                       # ID of the email list to query
+
+# Call the function to get subscribers from the email list
+subscribers_df <- get_subscribers_from_controller(
+  api_url = api_url,
+  email_list_id = email_list_id,
+  api_token = api_token
+)
+
+# View the retrieved data
+print(subscribers_df)
+
+# Optionally, save the subscribers data to a CSV file
+write.csv(subscribers_df, config$participant_data_file, row.names = FALSE)
+```
+
+The function returns a `data.frame` containing the list of subscribers from the specified email list saved in the `participant_data_file`
+
+### Get Records data from an Indicia warehouse
+
+You’ll need the following:
+
+ * Indicia Warehouse API URL (set in `config.yml`): The base URL for the Indicia warehouse.
+ * API Authentication Credentials:
+   * client_id: Your Indicia warehouse client ID (set in `config.yml`)
+   * shared_secret: Your shared secret for authentication (set in `config.yml`)
+ * User Warehouse ID: The unique identifier for the user whose records you want to retrieve (contained in data downloaded from controller app)
+ * Number of Records: The number of records you want to retrieve for that user (maximum is 10,000)
+ 
+Once you have the required parameters, you can call the `get_user_records_from_indicia` function to retrieve species records for a specific user from the Indicia warehouse.
+
+You can see how this function can be run in a loop to generate and save data for all users in the script defined in called `get_users_and_records.R`.
+
 ### Generating feedback items
 
-Now we've generated the test data we can run the pipeline but before we do let's have a look at the other code required to make the pipeline work. 
+Now we've generated the test (or real) data we can run the pipeline but before we do let's have a look at the other code required to make the pipeline work. 
 
 Firstly, the config file:
 
 `config.yml`
 
 ```{r,echo=F,warning=F}
-cat(readLines("../config.yml"), sep = '\n')
+cat(readLines("../config_example.yml"), sep = '\n')
 ```
 
 This file specifies which R/Rmd/HTML files are used in the email generation process. The config file is implemented using R package {config}. The values specified in the config file are loaded in the R code using config. Learn about the package here https://rstudio.github.io/config/articles/introduction.html
 
-`participant_data_file`: The file path for the inut data with the list of participants
-`data_file`: The file path for the the input data containing biological records
-`computation_script_bg`: The file path for the script for computations for the background data
-`computation_script_user`: The file path for the script for computations for the focal data (this could be the same script as computation_script_bg)
-`default_template_file`: The file path for the R markdown file containing the EDE format
-`template_html_file`: The file path for the HTML template containing formatting/header/footer etc.
+ * `participant_data_file`: The file path for the inut data with the list of participants
+ * `data_file`: The file path for the the input data containing biological records
+ * `computation_script_bg`: The file path for the script for computations for the background data
+ * `computation_script_user`: The file path for the script for computations for the focal data (this could be the same script as computation_script_bg)
+ * `default_template_file`: The file path for the R markdown file containing the EDE format
+ * `template_html_file`: The file path for the HTML template containing formatting/header/footer etc.
 
 The computation scripts are located in the `computations` folder. Each script is an R function (which must be called `compute_objects`) which takes either the focal or background data as its argument and returns a named list of computed objects. These objects can then be used in the R markdown file. For example here is the example computations provided in `computations_example.R`. 
 
@@ -218,10 +239,10 @@ The data (focal and background) and the computed objects (focal and background) 
 
 The HTML template [`templates_html/basic_templatehtml`](https://github.com/BiologicalRecordsCentre/recorder-feedback/blob/main/templates_html/basic_template.html) contains the formatting for the email. You only need to edit this if you whish to change the look and feel of the emails.
 
-Finally, now we've had a look at all the components that are used in the pipeline, you can trigger the pipeline using `targets::tar_make()` or `source(generate_feedback_items.R`). Pipeline can be called with a command line prompt. This is useful if you want to trigged the pipeline run as part of a schedule (eg a CRON job).
+Finally, now we've had a look at all the components that are used in the pipeline, you can trigger the pipeline using `targets::tar_make()` or `source(run_pipeline.R`). Pipeline can be called with a command line prompt. This is useful if you want to trigger the pipeline run as part of a schedule (eg a CRON job). You can provide a batch ID with a command line argument.
 
 ```
-Rscript generate_feedback_items.R
+Rscript run_pipeline.R test_001
 ```
 
 ### View generated emails
@@ -243,7 +264,9 @@ Now that you have the project set up and have generated test feedback, you can c
 
 Input data (the full dataset) must be provided as a csv (comma separated values). The columns within the data are up to you but for consistency we recommend using Darwin Core terms: https://dwc.tdwg.org/terms/#occurrence & https://dwc.tdwg.org/terms/#location
 
-The columns you specify here (or have been speficied by whatever data source you are using) must then be used in the computation scripts and R markdown template. 
+The columns you specify here (or have been specified by whatever data source you are using) must then be used in the computation scripts and R markdown template.
+
+In the records data (as specified in config as `data_file`) and the participant data (as specified in config as `participant_data_file`) there must be a shared `user_id` column which is used to link the users to their records. For example data from Indicia systems this might be the warehouse ID.
 
 ### Computating objects
 
@@ -256,6 +279,21 @@ The R markdown file is where you will spend the majority of you time developing 
 ### The HTML template
 
 The basic HTML template provided is lifted from R package {blastula} and provides formatting such as a container and headers/footers. If you want to change the look and feel of your feedback items you should copy the basic template and rename your copy to `custom_template.html`. You can edit the look and feel of the content by editing the css contained within the `<style>` tags in the html. You then need to edit `config.yml` to ensure that your new template is being used in your pipeline.
+
+## Sending emails
+
+You could send emails from R using packages such as blastula (https://CRAN.R-project.org/package=blastula) to set up SMTP. Define a function in `send_email.R` and then run code similar to this where you use the `meta_table.csv` generated to get the filepath of the email content, and email address from the `participant_data_file` to loop through and send emails using your `send_email()` function.
+
+```
+source("R/send_email.R")
+meta_table <-read.csv(paste0("renders/",batch_id,"/meta_table_",batch_id,".csv"))
+for (i in 1:nrow(meta_table)){
+  #get their email address
+  participants <- read.csv(config$participant_data_file)
+  recipient <- participants[participants$user_id == meta_table[i,"user_id"],]$email
+  send_email(recipient,meta_table$file[i])
+}
+```
 
 ## Examples
 

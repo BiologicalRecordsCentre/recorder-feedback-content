@@ -1,3 +1,10 @@
+# Description:
+# This helper function is responsible for sending a POST request to a specified URL using the curl package. It adds an authentication header and sends the query in the POST body. The function processes the response by converting the returned content from JSON format.
+# 
+# Arguments:
+# base_url (string): The base URL of the API endpoint to which the request will be sent.
+# auth_header (string): A string containing the authentication details (client ID and shared secret) formatted for the API.
+# query (string): A string representing the query to be sent in the POST request.
 get_data_helper <- function(base_url,auth_header,query){
   h <- new_handle()
   
@@ -15,7 +22,19 @@ get_data_helper <- function(base_url,auth_header,query){
 }
 
 
-
+# get_user_records_from_indicia
+# Description:
+# This function retrieves a specified number of biodiversity records submitted by a user from the Indicia warehouse. It constructs an Elasticsearch query to filter records based on the user’s warehouse ID and sorts them in descending order based on the creation date.
+# 
+# Arguments:
+# base_url (string): The base URL of the Indicia warehouse API.
+# client_id (string): The client ID for authenticating with the Indicia warehouse.
+# shared_secret (string): The shared secret for authentication.
+# user_warehouse_id (numeric): The ID of the user whose records are to be fetched.
+# n_records (numeric): The number of records to fetch.
+#
+# Returns:
+#   A list of user records retrieved from the Indicia warehouse.
 get_user_records_from_indicia <- function(base_url,client_id,shared_secret,user_warehouse_id,n_records){
   #create the authentication header
   auth_header <- paste('USER', client_id, 'SECRET', shared_secret, sep = ':')
@@ -30,7 +49,7 @@ get_user_records_from_indicia <- function(base_url,client_id,shared_secret,user_
 
 
 
-#test example
+# Test example (wrapped in an if block to avoid execution unless enabled)
 if(F){
   library(curl)
   config <- config::get()
