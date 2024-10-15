@@ -97,6 +97,18 @@ git clone https://github.com/your-github-username/recorder-feedback.git`
 
 Or alternatively you can use the RStudio IDE to clone the repository to a new project: https://happygitwithr.com/rstudio-git-github.html#clone-the-test-github-repository-to-your-computer-via-rstudio
 
+### Create key files
+
+Use terminal to copy files with new names. Or do the equivalent action in file explorer or RStudio
+
+```
+cp example_targets.R _targets.R
+cp example_run_pipeline.R run_pipeline.R
+cp example_config.yml config.yml
+```
+
+By keeping `example_` versions of the files in this repo, which you don't edit, but instead edit a derived file that you have just copied, makes it easier to pull updates from the main repo into your fork.
+
 ### Install required R packages
 
 Navigate to the project directory and install the necessary R packages using the renv package manager. Open R or RStudio and execute the following commands:
@@ -208,7 +220,7 @@ Firstly, the config file:
 `config.yml`
 
 ```{r,echo=F,warning=F}
-cat(readLines("../config_example.yml"), sep = '\n')
+cat(readLines("../example_config.yml"), sep = '\n')
 ```
 
 This file specifies which R/Rmd/HTML files are used in the email generation process. The config file is implemented using R package {config}. The values specified in the config file are loaded in the R code using config. Learn about the package here https://rstudio.github.io/config/articles/introduction.html
