@@ -1,8 +1,10 @@
-# Recorder Feedback via Effective Digital Engagements
+![](https://github.com/BiologicalRecordsCentre/recorder-feedback/blob/main/Recorder%20feedback%20logo_small.png?raw=true)  
 
-Extensible code for generating effective digital engagements for biological recorders. Developed in partnership with JNCC as part of the [Natural Capital and Ecosystem Assessment](https://www.gov.uk/government/publications/natural-capital-and-ecosystem-assessment-programme/natural-capital-and-ecosystem-assessment-programme) programme managed by Defra.
+# Generating Recorder Feedback Content
 
-For further details about how to use this code please visit the documentation page: https://biologicalrecordscentre.github.io/recorder-feedback/
+Part of the Recorder Feedback system: https://github.com/BiologicalRecordsCentre/recorder-feedback
+
+Extensible code for generating effective digital engagements for biological recorders. Developed in partnership with JNCC as part of the [Natural Capital and Ecosystem Assessment](https://www.gov.uk/government/publications/natural-capital-and-ecosystem-assessment-programme/natural-capital-and-ecosystem-assessment-programme) programme managed by Defra. For further details about how to use this code please visit the documentation page: https://biologicalrecordscentre.github.io/recorder-feedback-content/
 
 ## Overview
 
@@ -40,5 +42,5 @@ This code is not well suited for 'on-the-fly' feedback delivered to a recorder w
    * a configuration file (`config.yml`) containing information about all of the above
  * Rendered items are saved in `renders/[batch_id]` folder with recipient-specific HTML files and a .csv metadata file
   
-A minimal example of all of these items is included and is demonstrated in the "getting started" part of the documentation: https://biologicalrecordscentre.github.io/recorder-feedback/
+A minimal example of all of these items is included and is demonstrated in the "getting started" part of the documentation.
 
