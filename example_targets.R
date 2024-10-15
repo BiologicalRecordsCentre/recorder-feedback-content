@@ -85,6 +85,9 @@ list(
   #reading in the raw data to R object
   tar_target(raw_data, read.csv(raw_data_file)),
   
+  #reading in the raw data to R object
+  tar_target(users_target, read.csv(config$participant_data_file)),
+  
   #carry out the computations on the whole dataset
   tar_target(bg_computed_objects,do_computations(computation = computation_file, records_data=raw_data)),
   
@@ -94,7 +97,7 @@ list(
   #create a dataframe of users and their email files
   tar_combine(meta_table,
               mapping$meta_data,
-              command = make_meta_table(list(!!!.x),batch_id),
+              command = make_meta_table(list(!!!.x),batch_id,users_target),
               use_names = T,
               format="file"
               )
