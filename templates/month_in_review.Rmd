@@ -7,6 +7,7 @@ params:
     bg_computed_objects: ""
     user_computed_objects: ""
     user_email: "UNKNOWN"
+    content_key: ""
 footer-date-time: "`r  format(Sys.time(), '%Y-%m-%d %H:%M:%S %Z')`"
 footer-unsubscribe-link: "www.google.com"
 user-email: "`r params$user_email`"

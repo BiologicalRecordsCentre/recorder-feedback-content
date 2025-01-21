@@ -1,22 +1,14 @@
 
 library(dplyr)
 
-# simulate participants
-generate_participants <- function(n_participants){
-  # Hypothetical list of first names
-  first_names <- c("John", "Alice", "David", "Emily", "Michael", "Sophia", "Brian", "Olivia", "Robert", "Emma", "Christopher", "Ava", "Daniel", "Mia", "Matthew", "Ella", "William", "Grace", "Andrew", "Liam","Jessica", "Benjamin", "Chloe", "Jonathan", "Sophie", "Nicholas", "Charlotte", "Anthony", "Daniel", "Ashley","Tyler", "Ethan", "Zoe", "Alexander", "Emma", "Ryan", "Madison", "Samuel", "Abigail", "Nathan", "Hannah","Christopher", "Isabella", "Joseph", "Aiden", "Emily", "Grace", "David", "Daniel", "Olivia", "Liam","Michael", "Ella", "Joshua", "Ava", "James", "Mia", "Andrew", "Sophia", "Brandon", "Lily", "Nicholas","Amelia", "Evan", "Natalie", "William", "Charlotte", "Logan", "Grace", "Matthew", "Avery", "Justin","Addison", "Aaron", "Scarlett", "Kyle", "Aria", "Jason", "Bella", "Alex", "Samantha", "Eric", "Lillian","Timothy", "Victoria", "Mark", "Leah", "Brian", "Audrey", "Cameron", "Claire", "Peter", "Stella")
-  
-  surnames <- LETTERS
-  
-  names <- paste(sample(first_names,n_participants,replace = T),sample(surnames,n_participants,replace = T))
-  
-  data.frame(user_id= 1:n_participants,
-             name = names,
-             email = paste0(gsub(" ",".",names),"@email.com")
-             )
-}
 
-simulated_participants <- generate_participants(4)
+simulated_participants <- data.frame(user_id= c("42523","75437","54642"),
+                                     name = c("Robert H","Grace S","Alice Johnson"),
+                                     email = c("Alice Johnson","grace@example.com","alice@example.com")
+)
+
+
+
 write.csv(simulated_participants,"data/simulated_participants.csv",row.names = F)
 
 

@@ -4,25 +4,19 @@ library(jsonlite)
 library(curl)
 
 config <- config::get()
+source("R/gather/get_records_from_indicia.R")
+source("R/gather/get_subscribers_from_controller.R")
 
-source("R/get_records_from_indicia.R")
-source("R/get_subscribers_from_controller.R")
 
-email_list_id <- "1"  # Replace with your email list ID
-
-# Get subscribers and print the data frame
+# Get subscribers for the list and write the data frame
 subscribers_df <- get_subscribers_from_controller(api_url = config$controller_app_base_url, 
-                                                  email_list_id, 
+                                                  email_list_id = config$controller_app_list_id, 
                                                   api_token = config$controller_app_api_key)
-subscribers_df
-
-#save the data
 write.csv(subscribers_df,config$participant_data_file,row.names = F)
 
 
 
 #loop through users
-
 records_data <- data.frame()#create an empty data frame
 for (i in 1:nrow(subscribers_df)){
   data_out <- get_user_records_from_indicia(base_url = config$indicia_warehouse_base_url, 
@@ -48,7 +42,4 @@ for (i in 1:nrow(subscribers_df)){
   }
 }
 
-records_data
-
-#save the data
-write.csv(records_data,config$data_file,row.names = F)
+write.csv(records_data,config$data_file,row.names = F)#save the data

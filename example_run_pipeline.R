@@ -23,24 +23,43 @@ if(!require(renv)){
 source("renv/activate.R")
 renv::restore()
 
-# OPTIONAL: Get data (if using external sources)
-source("R/get_users_and_records.R")
+# GATHER
+source("R/gather/get_subscribers_from_controller.R")
+# Get subscribers for the list and write the data frame
+subscribers_df <- get_subscribers_from_controller(api_url = config$controller_app_base_url, 
+                                                  email_list_id = config$controller_app_list_id, 
+                                                  api_token = config$controller_app_api_key) 
+write.csv(subscribers_df,config$participant_data_file,row.names = F)
 
-# Set an environment variable in R for the batch code
-Sys.setenv(BATCH_ID = batch_id)
+# get records data
+#TBC
 
-# run the pipeline
-targets::tar_make()
 
-#and unset the variable
-Sys.unsetenv("BATCH_ID")
+# GENERATE
+#run the pipeline
+Sys.setenv(BATCH_ID = batch_id) # Set an environment variable in R for the batch code
+targets::tar_make() # run the pipeline
+Sys.unsetenv("BATCH_ID") #and unset the variable
 
-# OPTIONAL: send the emails
-source("R/send_email.R")
-meta_table <-read.csv(paste0("renders/",batch_id,"/meta_table_",batch_id,".csv"))
+
+#SEND
+source("R/send/send_single_email.R")
+source("R/send/send_notify_app.R")
+
+meta_table <-read.csv(paste0("renders/",batch_id,"/meta_table.csv"))
+participants <- read.csv(config$participant_data_file)
+
+#here we are going through all the users and sending email
 for (i in 1:nrow(meta_table)){
-  #get their email address
-  participants <- read.csv(config$participant_data_file)
-  recipient <- participants[participants$user_id == meta_table[i,"user_id"],]$email
-  send_email(recipient,meta_table$file[i])
+  send_single_email(
+    recipient = meta_table[i,"email"],
+    email_file = meta_table$file[i])
+  
+  send_notify_app(
+    content_key = meta_table[i,"content_key"],
+    user_external_key = meta_table[i,"user_id"],
+    batch_id = batch_id
+  )
+  
+  #send_single_email(recipient,email_content)
 }

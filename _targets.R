@@ -11,11 +11,11 @@ tar_option_set(
 tar_option_set(packages = c("dplyr", "ggplot2","rmarkdown"))
 
 #load functions needed
-source("R/render_content.R")
-source("R/do_computations.R")
-source("R/make_meta_table.R")
-source("R/look_for_computed_objects.R")
-source("R/email_format.R")
+source("R/generate/render_content.R")
+source("R/generate/do_computations.R")
+source("R/generate/make_meta_table.R")
+source("R/generate/look_for_computed_objects.R")
+source("R/generate/email_format.R")
 
 #read in data files
 #get configuration from config.yml
@@ -34,6 +34,9 @@ values <- users #values for static branching
 
 #batch identifier
 batch_id <- Sys.getenv("BATCH_ID")
+if (batch_id == ""){
+  batch_id <- "test"
+}
 
 # mapping for static branching
 mapping <- tar_map(
@@ -45,6 +48,9 @@ mapping <- tar_map(
   #do any computations on the user data
   tar_target(user_computed_objects,do_computations(computation = computation_file_user, records_data=user_data)),
   
+  # generate a content_key
+  tar_target(content_key,paste(sample(0:9,36,replace = T),collapse = "")),
+  
   #render the content
   tar_target(data_story_content, 
              render_content(
@@ -54,7 +60,8 @@ mapping <- tar_map(
                                   user_data = user_data,
                                   user_computed_objects = user_computed_objects,
                                   bg_data = raw_data,
-                                  bg_computed_objects = bg_computed_objects
+                                  bg_computed_objects = bg_computed_objects,
+                                  content_key = content_key
                                   ),
                user_id = user_id_,
                batch_id = batch_id,
@@ -62,7 +69,7 @@ mapping <- tar_map(
                ),
              format="file"), # create the content as html
   
-  tar_target(meta_data,list(user_id = user_id_,file = data_story_content))
+  tar_target(meta_data,list(user_id = user_id_,file = data_story_content,content_key = content_key))
 )
 
 # construct pipeline
