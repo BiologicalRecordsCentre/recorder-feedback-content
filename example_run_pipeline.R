@@ -32,7 +32,38 @@ subscribers_df <- get_subscribers_from_controller(api_url = config$controller_ap
 write.csv(subscribers_df,config$participant_data_file,row.names = F)
 
 # get records data
-#TBC
+library(httr)
+library(jsonlite)
+library(curl)
+source("R/gather/get_records_from_indicia.R")
+
+records_data <- data.frame()#create an empty data frame
+for (i in 1:nrow(subscribers_df)){
+  data_out <- get_user_records_from_indicia(base_url = config$indicia_warehouse_base_url, 
+                                            client_id = config$indicia_warehouse_client_id,
+                                            shared_secret = config$indicia_warehouse_secret,
+                                            user_warehouse_id = subscribers_df$user_id[i],
+                                            n_records = 5)
+  
+  if (data_out$hits$total$value >0){
+    #any intermediate data processing
+    latlong <- data_out$hits$hits$`_source`$location$point
+    
+    #extract all the columns you need
+    user_records <- data.frame(latitude = strsplit(latlong,",")[[1]][1],
+                               longitude = strsplit(latlong,",")[[1]][2],
+                               species = data_out$hits$hits$`_source`$taxon$taxon_name,
+                               species_vernacular = data_out$hits$hits$`_source`$taxon$vernacular_name,
+                               date = data_out$hits$hits$`_source`$event$date_start,
+                               user_id = data_out$hits$hits$`_source`$metadata$created_by_id
+    )
+    
+    records_data <- rbind(records_data,user_records)
+  }
+}
+
+write.csv(records_data,config$data_file,row.names = F)#save the data
+
 
 
 # GENERATE
@@ -45,21 +76,35 @@ Sys.unsetenv("BATCH_ID") #and unset the variable
 #SEND
 source("R/send/send_single_email.R")
 source("R/send/send_notify_app.R")
+library(blastula)
+
+Sys.setenv(SMTP_PASSWORD = config$mail_password)
+creds <- creds_envvar(
+  user = config$mail_username,
+  pass_envvar = "SMTP_PASSWORD",
+  host = config$mail_server,
+  port = config$mail_port,
+  use_ssl = config$mail_use_ssl)
 
 meta_table <-read.csv(paste0("renders/",batch_id,"/meta_table.csv"))
 participants <- read.csv(config$participant_data_file)
 
 #here we are going through all the users and sending email
 for (i in 1:nrow(meta_table)){
-  send_single_email(
-    recipient = meta_table[i,"email"],
-    email_file = meta_table$file[i])
   
   send_notify_app(
     content_key = meta_table[i,"content_key"],
     user_external_key = meta_table[i,"user_id"],
     batch_id = batch_id
+    )
+  
+  email_obj <- blastula:::cid_images(meta_table[i,"file"])
+  smtp_send(email_obj,
+            from = config$mail_default_sender,
+            to = meta_table[i,"email"],
+            subject = config$mail_default_subject,
+            credentials = creds,
+            verbose = F
   )
   
-  #send_single_email(recipient,email_content)
 }
