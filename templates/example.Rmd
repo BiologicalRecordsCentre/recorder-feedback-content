@@ -8,8 +8,8 @@ params:
     user_computed_objects: ""
     user_email: "UNKNOWN"
     content_key: ""
+    config: ""
 footer-date-time: "`r  format(Sys.time(), '%Y-%m-%d %H:%M:%S %Z')`"
-footer-unsubscribe-link: "www.google.com"
 user-email: "`r params$user_email`"
 ---
 
@@ -21,7 +21,6 @@ knitr::opts_chunk$set(echo = F,
                       error=F,
                       results='asis')
 ```
-
 
 ```{r calculations, include=F}
 #here you can do simple calculations for generating metrics that you later include in the text of the email. However if you wish to do more complex calculations it is recommended that these are done via prior (method tbc)
@@ -142,4 +141,9 @@ div(style="margin: auto;width: 100%;text-align: center;",
 ```
 
 
+---
+
+[Provide feedback on this content](`r paste0(params$config$controller_app_web_url,'submit_feedback/',params$content_key)`)
+
+If you wish to stop receiving these emails, you may [unsubscribe here](`r paste0(params$config$controller_app_web_url,'unsubscribe/',params$content_key)`)
 

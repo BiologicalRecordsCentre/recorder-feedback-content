@@ -61,7 +61,8 @@ mapping <- tar_map(
                                   user_computed_objects = user_computed_objects,
                                   bg_data = raw_data,
                                   bg_computed_objects = bg_computed_objects,
-                                  content_key = content_key
+                                  content_key = content_key,
+                                  config = config
                                   ),
                user_id = user_id_,
                batch_id = batch_id,
