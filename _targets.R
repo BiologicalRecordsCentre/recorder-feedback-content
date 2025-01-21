@@ -49,7 +49,7 @@ mapping <- tar_map(
   tar_target(user_computed_objects,do_computations(computation = computation_file_user, records_data=user_data)),
   
   # generate a content_key
-  tar_target(content_key,paste(sample(0:9,36,replace = T),collapse = "")),
+  tar_target(content_key,paste(sample(c(1:9,letters),16,replace = T),collapse = "")),
   
   #render the content
   tar_target(data_story_content, 
