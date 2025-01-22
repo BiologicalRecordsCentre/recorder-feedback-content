@@ -1,27 +1,54 @@
-# This is a script that can be run from command line (e.g. on a schedule) 
+---
+title: "Recorder feedback pipeline"
+output: html_document
+date: "`r Sys.Date()`"
+resource_files:
+  - "templates_html/"
+  - "templates/"
+  - "R/"
+  - "example_run_pipeline.R"
+  - "config.yml"
+  - "data/"
+  - "computations/"
+  - "renders/"
+  - "_targets.R"
+  - "renv/activate.R"
+---
+
+```{r configuration}
+#Sys.setenv(R_CONFIG_ACTIVE = "default") # running locally for development
+#Sys.setenv(R_CONFIG_ACTIVE = "rsconnect") #running on posit connect
 
 #PREP
-#getting or generating batch_id
-args <- commandArgs(TRUE) # get batch id from command line 
-if (length(args)>0){
-  batch_id <- args[1]
-} else { #set a batch id to date + random letters
-  batch_id <- paste0(Sys.Date(),"-",paste(sample(letters,10),collapse = ""))
-}
-
-config <- config::get()
+#generating batch_id
+batch_id <- paste0(Sys.Date(),"-",paste(sample(letters,10),collapse = ""))
 
 # Renv configuration
 if(!require(renv)){
   install.packages("renv",repos='http://cran.r-project.org')
   library(renv)
 }
-source("renv/activate.R") #activate the renv environment
-renv::restore() #restore packages
+
+#posit connect automatically sets up the renv environment, but if not using rsconnect then you need to manually initiate the renv environment
+if(Sys.getenv("R_CONFIG_ACTIVE") != "rsconnect"){ 
+  source("renv/activate.R") #activate the renv environment
+  renv::restore() #restore packages
+}
+
+#packages
 library(httr)
 library(jsonlite)
 library(curl)
 
+#load configuration from config.yml using config package
+config <- config::get()
+
+#export the R code from here as a R file
+knitr::purl(input = "run_pipeline.Rmd", output = "run_pipeline.R",documentation = 0)
+```
+
+
+```{r gather}
 # GATHER
 source("R/gather/get_subscribers_from_controller.R")
 # Get subscribers for the list and write the data frame
@@ -31,7 +58,6 @@ subscribers_df <- get_subscribers_from_controller(api_url = config$controller_ap
 write.csv(subscribers_df,config$participant_data_file,row.names = F)
 
 # get records data
-
 source("R/gather/get_records_from_indicia.R")
 records_data <- data.frame()#create an empty data frame
 for (i in 1:nrow(subscribers_df)){
@@ -60,47 +86,74 @@ for (i in 1:nrow(subscribers_df)){
 
 write.csv(records_data,config$data_file,row.names = F)#save the data
 
+```
 
-
+```{r generate}
 # GENERATE
 #run the pipeline
 Sys.setenv(BATCH_ID = batch_id) # Set an environment variable in R for the batch code
 targets::tar_make() # run the pipeline
 Sys.unsetenv("BATCH_ID") #and unset the variable
+```
 
+```{r send}
 
 #SEND
-source("R/send/send_single_email.R")
 source("R/send/send_notify_app.R")
 library(blastula)
 
-Sys.setenv(SMTP_PASSWORD = config$mail_password)
-creds <- creds_envvar(
-  user = config$mail_username,
-  pass_envvar = "SMTP_PASSWORD",
-  host = config$mail_server,
-  port = config$mail_port,
-  use_ssl = config$mail_use_ssl)
+if(config$mail_creds == "envvar"){
+  Sys.setenv(SMTP_PASSWORD = config$mail_password)
+  creds <- creds_envvar(
+    user = config$mail_username,
+    pass_envvar = "SMTP_PASSWORD",
+    host = config$mail_server,
+    port = config$mail_port,
+    use_ssl = config$mail_use_ssl)
+}
+
+if(config$mail_creds == "anonymous"){
+  creds <- creds_anonymous(host = config$mail_server,port=config$mail_port,use_ssl = config$mail_use_ssl)
+}
 
 meta_table <-read.csv(paste0("renders/",batch_id,"/meta_table.csv"))
 participants <- read.csv(config$participant_data_file)
 
 #here we are going through all the users and sending email
-for (i in 1:nrow(meta_table)){
+if (!is.data.frame(meta_table)) {
+  stop("meta_table must be a data frame.")
+}
+
+for (i in 1:nrow(meta_table)) {
+  # Debug: Print current row being processed
+  print(paste("Processing row:", i))
   
+  # Check for required columns in meta_table
+  if (!all(c("content_key", "user_id", "file", "email") %in% colnames(meta_table))) {
+    stop("meta_table is missing required columns.")
+  }
+  
+  # Safely extract values
+  content_key <- meta_table[i, "content_key"]
+  user_id <- meta_table[i, "user_id"]
+  file <- meta_table[i, "file"]
+  email <- meta_table[i, "email"]
+  
+  # Perform operations
   send_notify_app(
-    content_key = meta_table[i,"content_key"],
-    user_external_key = meta_table[i,"user_id"],
-    batch_id = batch_id
-    )
-  
-  email_obj <- blastula:::cid_images(meta_table[i,"file"])
-  smtp_send(email_obj,
-            from = config$mail_default_sender,
-            to = meta_table[i,"email"],
-            subject = config$mail_default_subject,
-            credentials = creds,
-            verbose = F
+    content_key = content_key,
+    user_external_key = user_id,
+    batch_id = batch_id,
+    config = config
   )
   
+  email_obj <- blastula:::cid_images(file)
+  smtp_send(email_obj,
+            from = config$mail_default_sender,
+            to = email,
+            subject = config$mail_default_subject,
+            credentials = creds,
+            verbose = FALSE
+  )
 }
+```

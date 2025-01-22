@@ -9,3 +9,7 @@ templates/rosm.cache
 .Renviron
 
 config.yml
+
+rsconnect
+dispatch_report.html
+run_pipeline.html

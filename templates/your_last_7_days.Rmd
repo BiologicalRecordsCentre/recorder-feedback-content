@@ -1,0 +1,124 @@
+---
+title: "Recorder Feedback Example Email"
+params:
+    user_name: ""
+    user_data: ""
+    bg_data: ""
+    bg_computed_objects: ""
+    user_computed_objects: ""
+    user_email: "UNKNOWN"
+    content_key: ""
+    config: ""
+footer-date-time: "`r  format(Sys.time(), '%Y-%m-%d %H:%M:%S %Z')`"
+user-email: "`r params$user_email`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F,
+                      warning = F,
+                      message = FALSE, 
+                      fig.align = 'center',
+                      error=F,
+                      results='asis')
+```
+
+```{r calculations, include=F}
+# Get the current date
+current_date <- Sys.Date()
+
+# Calculate the date 7 days prior
+start_date <- current_date - 7
+
+# Filter the data for the past 7 days
+last_week_data <- params$user_data %>% 
+  filter(date >= start_date, date <= current_date)
+
+# Calculate metrics for the past 7 days
+n_species_week <- last_week_data %>% pull(species) %>% unique() %>% length()
+n_records_week <- last_week_data %>% nrow()
+n_days_week <- last_week_data %>% 
+  pull(date) %>% 
+  unique() %>% 
+  length()
+
+# Top species recorded in the past 7 days
+species_names_week <- last_week_data %>% 
+  group_by(species) %>% 
+  summarise(n = n()) %>% 
+  arrange(desc(n)) %>%
+  pull(species)
+
+last_week <- current_date - c(0,1,2,3,4,5,6,7)
+
+
+
+# Records per day in the past 7 days
+records_per_day_week <- last_week_data %>% 
+  group_by(date) %>% 
+  summarise(number_of_records = n()) %>%
+  mutate(date = as.Date(date)) %>%
+  left_join(data.frame(date = last_week),.) %>%
+  mutate(number_of_records = if_else(is.na(number_of_records),0,number_of_records))
+```
+
+```{r packages, include =F}
+library(dplyr) #wrangling
+library(ggplot2) #plotting
+library(ggspatial) #maps
+library(sf)
+library(htmltools)
+```
+
+```{css, echo=FALSE}
+body{
+  font-family: Helvetica;
+  font-size: 13pt;
+}
+
+```
+
+# Hello `r params$user_name`!
+
+Welcome to `r weekdays(current_date)`'s Nature Diary for the past 7 days. Let’s dive into the highlights of your recording journey. 🌍✨
+
+## Your Activity
+
+In the past 7 days you recorded on `r n_days_week` days submitting a total of `r n_records_week` records. You recorded `r n_species_week` different species. 
+
+```{r}
+
+if (n_records_week>0){
+  text1 <- paste0("Your top five species sightings included: ",paste0(head(species_names_week,5),collapse = ", "),". Wow!")
+} else {
+  text1 <- "You haven't recorded anything this week, what might you see next?"
+}
+
+p(text1)
+
+```
+
+
+
+Here’s how your activity shaped up through the week:
+
+```{r plot}
+# Records per day plot for the past 7 days
+ggplot(records_per_day_week, aes(x = date, y = number_of_records)) +
+  geom_col(fill = "#92A41A") +
+  theme_minimal(base_size = 18) +
+  labs(x = "Date", y = "Number of records")+
+  scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(min(x), (max(x) + 1) * 1.1)))))+
+  geom_hline(yintercept = 5,alpha= 0)
+```
+
+
+## A Big Thank You!
+
+Every single record you log plays a vital role in understanding and protecting biodiversity. Your efforts are truly making a difference.
+
+We’d love to hear your thoughts! 🌟 [Share your feedback here](`r paste0(params$config$controller_app_web_url,'submit_feedback/',params$content_key)`)
+
+If you’d prefer to pause these updates, [unsubscribe here](`r paste0(params$config$controller_app_web_url,'unsubscribe/',params$content_key)`)
+
+Here’s to more discoveries in the wild,
+*The iRecord Team*

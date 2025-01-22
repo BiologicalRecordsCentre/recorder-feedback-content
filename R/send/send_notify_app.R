@@ -1,5 +1,5 @@
 
-send_notify_app <- function(content_key, user_external_key, batch_id = NULL) {
+send_notify_app <- function(content_key, user_external_key, batch_id = NULL,config = config) {
   url <- paste0(config$controller_app_base_url,"items")
   
   body <- list(
@@ -9,7 +9,7 @@ send_notify_app <- function(content_key, user_external_key, batch_id = NULL) {
     batch_id = batch_id
   )
   
-  response <- POST(url, body = body, encode = "json", add_headers(`x-access-token` = config$controller_app_api_key))
+  response <- POST(url, body = body, encode = "json", add_headers(Authorization = paste("Bearer", config$controller_app_api_key)))
   
   if (status_code(response) == 201) {
     return(content(response))

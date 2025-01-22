@@ -21,7 +21,7 @@ source("R/generate/email_format.R")
 #read in data files
 #get configuration from config.yml
 config <- config::get()
-Sys.setenv(RSTUDIO_PANDOC=config$pandoc_path) #pandoc path
+#Sys.setenv(RSTUDIO_PANDOC=config$pandoc_path) #pandoc path
 users <- read.csv(config$participant_data_file) #user data
 data_file <- read.csv(config$data_file) #raw species data
 
