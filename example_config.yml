@@ -11,4 +11,13 @@ default:
   indicia_warehouse_base_url: ""
   indicia_warehouse_client_id: ""
   indicia_warehouse_secret: ""
+  mail_server: ""
+  mail_port: 000
+  mail_use_tls: True
+  mail_use_ssl: True
+  mail_username: ''
+  mail_password: ''
+  mail_default_sender: ''
+  mail_default_subject: "Your personalised recorder feedback"
+  mail_creds: ""
   

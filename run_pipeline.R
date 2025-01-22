@@ -25,6 +25,7 @@ library(curl)
 #load configuration from config.yml using config package
 config <- config::get()
 
+#export the R code from here as a R file
 knitr::purl(input = "run_pipeline.Rmd", output = "run_pipeline.R",documentation = 0)
 
 # GATHER
