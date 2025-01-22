@@ -292,20 +292,36 @@ The R markdown file is where you will spend the majority of you time developing 
 
 The basic HTML template provided is lifted from R package {blastula} and provides formatting such as a container and headers/footers. If you want to change the look and feel of your feedback items you should copy the basic template and rename your copy to `custom_template.html`. You can edit the look and feel of the content by editing the css contained within the `<style>` tags in the html. You then need to edit `config.yml` to ensure that your new template is being used in your pipeline.
 
-## Sending emails
+## Deployment
 
-You could send emails from R using packages such as blastula (https://CRAN.R-project.org/package=blastula) to set up SMTP. Define a function in `send_email.R` and then run code similar to this where you use the `meta_table.csv` generated to get the filepath of the email content, and email address from the `participant_data_file` to loop through and send emails using your `send_email()` function.
+A full pipeline is included in `run_pipeline.Rmd` (also `run_pipeline.R`). This code represents an **R Markdown script** for a feedback delivery pipeline, designed to automate the gathering, processing, and emailing of feedback to users. Here’s a breakdown of its structure and purpose:
 
-```
-source("R/send_email.R")
-meta_table <-read.csv(paste0("renders/",batch_id,"/meta_table_",batch_id,".csv"))
-for (i in 1:nrow(meta_table)){
-  #get their email address
-  participants <- read.csv(config$participant_data_file)
-  recipient <- participants[participants$user_id == meta_table[i,"user_id"],]$email
-  send_email(recipient,meta_table$file[i])
-}
-```
+#### **1. Configuration**
+- Sets up the runtime environment.
+- Uses `renv` for dependency management:
+  - Ensures the correct packages are installed and restored.
+  - Differentiates between local development and deployment on Posit Connect.
+- Generates a unique `batch_id` for tracking a specific run.
+- Loads configurations from a `config.yml` file, which defines parameters like API keys and file paths.
+
+#### **2. Gather**
+- **Fetch Subscribers:**
+  - Uses `get_subscribers_from_controller.R` to retrieve a list of email subscribers via an API.
+  - Stores the list as a CSV file.
+  
+- **Fetch User Records:**
+  - Loops through each subscriber, fetching records of observational data (e.g., species, location, date).
+  - Processes raw data into a structured format (e.g., extracting latitude, longitude, and species details).
+  - Appends all records into a single dataframe, saving it as a CSV file.
+
+#### **3. Generate**
+- Sets the `BATCH_ID` environment variable.
+- Runs a pipeline using `targets::tar_make()`, which is likely responsible for computations or rendering feedback reports.
+
+#### **4. Send**
+- Prepares for email delivery using the `blastula` library.
+- Retrieves metadata from `meta_table.csv` and participant data from the saved CSV.
+- Sends feedback emails
 
 ## Examples
 
