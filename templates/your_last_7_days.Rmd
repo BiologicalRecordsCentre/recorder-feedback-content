@@ -31,7 +31,7 @@ start_date <- current_date - 7
 
 # Filter the data for the past 7 days
 last_week_data <- params$user_data %>% 
-  filter(date >= start_date, date <= current_date)
+  filter(date >= start_date, date < current_date)
 
 # Calculate metrics for the past 7 days
 n_species_week <- last_week_data %>% pull(species) %>% unique() %>% length()
@@ -48,9 +48,7 @@ species_names_week <- last_week_data %>%
   arrange(desc(n)) %>%
   pull(species)
 
-last_week <- current_date - c(0,1,2,3,4,5,6,7)
-
-
+last_week <- current_date - c(1,2,3,4,5,6,7)
 
 # Records per day in the past 7 days
 records_per_day_week <- last_week_data %>% 
@@ -83,12 +81,12 @@ Welcome to `r weekdays(current_date)`'s Nature Diary for the past 7 days. Let’
 
 ## Your Activity
 
-In the past 7 days you recorded on `r n_days_week` days submitting a total of `r n_records_week` records. You recorded `r n_species_week` different species. 
+In the past 7 days you recorded on `r n_days_week` day`r if(n_days_week!=1){"s"}` submitting a total of `r n_records_week` records. You recorded `r n_species_week` different species. 
 
 ```{r}
 
 if (n_records_week>0){
-  text1 <- paste0("Your top five species sightings included: ",paste0(head(species_names_week,5),collapse = ", "),". Wow!")
+  text1 <- paste0("Your top species sightings included: ",paste0(head(species_names_week,5),collapse = ", "),". Wow!")
 } else {
   text1 <- "You haven't recorded anything this week, what might you see next?"
 }
@@ -108,7 +106,10 @@ ggplot(records_per_day_week, aes(x = date, y = number_of_records)) +
   theme_minimal(base_size = 18) +
   labs(x = "Date", y = "Number of records")+
   scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(min(x), (max(x) + 1) * 1.1)))))+
-  geom_hline(yintercept = 5,alpha= 0)
+  scale_x_date(date_breaks = 'day', 
+              date_labels = '%a')+
+  geom_hline(yintercept = 5,alpha= 0)+
+  theme(panel.grid.minor.x = element_blank())
 ```
 
 
