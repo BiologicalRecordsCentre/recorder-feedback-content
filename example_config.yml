@@ -18,6 +18,7 @@ default:
   mail_username: ''
   mail_password: ''
   mail_default_sender: ''
+  mail_default_name: 'Recorder Feedback'
   mail_default_subject: "Your personalised recorder feedback"
   mail_creds: ""
   

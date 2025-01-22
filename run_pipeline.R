@@ -26,7 +26,7 @@ library(curl)
 config <- config::get()
 
 #export the R code from here as a R file
-knitr::purl(input = "run_pipeline.Rmd", output = "run_pipeline.R",documentation = 0)
+#knitr::purl(input = "run_pipeline.Rmd", output = "run_pipeline.R",documentation = 0)
 
 # GATHER
 source("R/gather/get_subscribers_from_controller.R")
@@ -125,9 +125,12 @@ for (i in 1:nrow(meta_table)) {
     config = config
   )
   
+  sender <- config$mail_default_sender
+  names(sender) <- config$mail_default_name
+  
   email_obj <- blastula:::cid_images(file)
   smtp_send(email_obj,
-            from = config$mail_default_sender,
+            from = sender,
             to = email,
             subject = config$mail_default_subject,
             credentials = creds,
