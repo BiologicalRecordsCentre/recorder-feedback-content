@@ -40,7 +40,9 @@ get_user_records_from_indicia <- function(base_url,client_id,shared_secret,user_
   auth_header <- paste('USER', client_id, 'SECRET', shared_secret, sep = ':')
   
   #generate the elasticsearchquery
-  query <- paste0('{"size": "',n_records,'","query":{"bool":{"must":[{"term":{"metadata.created_by_id":"',user_warehouse_id,'"}}]}},"sort":[{"metadata.created_on" : {"order" : "desc"}}]}')
+  #https://github.com/Indicia-Team/support_files/blob/master/Elasticsearch/docs/occurrences-document-structure.md
+  
+  query <-build_query(size = n_records,query_terms = list(metadata.created_by_id=user_warehouse_id),sort_terms = list(event.date_start = list(order = "desc")))
   
   #make the request
   records <- get_data_helper(base_url = base_url, auth_header = auth_header,query = query)
@@ -63,3 +65,97 @@ if(F){
   print(data_df)
 }
 
+
+
+#' Build an Elasticsearch Query in R
+#' 
+#' This function constructs a JSON query for Elasticsearch, supporting must and should queries,
+#' as well as aggregations and sorting.
+#' 
+#' @param size Integer. The number of results to return (default is 0).
+#' @param query_terms List. Named list of terms for must queries (mandatory conditions).
+#' @param query_terms_s List. Named list of terms for should queries (optional conditions).
+#' @param agg_terms List. Named list of fields for aggregations.
+#' @param agg_size Integer. The number of aggregation buckets to return (default is 0).
+#' @param sort_terms List. Named list of sorting fields and order (e.g., list(field1 = "asc")).
+#' @param print_json Logical. Whether to print the generated JSON query (default is FALSE).
+#' 
+#' @return A JSON-formatted query string.
+#' @export
+#' 
+#' @examples
+#' query <- build_query(size = 10, query_terms = list(field1 = "value1"), agg_terms = list(field2 = "field2"), sort_terms = list(field1 = "asc"))
+#' cat(query)
+#' 
+build_query <- function(size = 0,
+                        query_terms = list(),
+                        query_terms_s = list(),
+                        agg_terms = list(),
+                        agg_size = 0,
+                        sort_terms = list(),
+                        print_json= F) {
+  
+  # Create the basic query structure
+  q_r <- list(size = as.character(size))  # Convert size to character)
+  
+  # Add must queries (mandatory conditions for matching documents)
+  if (length(query_terms) > 0) {
+    for (i in 1:length(query_terms)){
+      q_r$query$bool$must[[i]] <-
+        list(term = list(temp_name = query_terms[[i]]))
+      names(q_r$query$bool$must[[i]]$term) <- names(query_terms)[i]  # Assign field names correctly
+    }
+  }
+  
+  # Add should queries (optional conditions that boost relevance)
+  if (length(query_terms_s) > 0) {
+    for (i in 1:length(query_terms_s)){
+      q_r$query$bool$should[[i]] <-
+        list(term = list(temp_name = query_terms_s[[i]]))
+      names(q_r$query$bool$should[[i]]$term) <- names(query_terms_s)[i]  # Assign field names correctly
+    }
+    
+    # Ensure at least one "should" condition is met if present
+    # Reference: https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-bool-query.html#bool-min-should-match
+    q_r$query$bool$minimum_should_match  <- 1  
+  }
+  
+  # Add aggregations (grouping results based on field values)
+  if (length(agg_terms) > 0) {
+    for (i in 1:length(agg_terms)){
+      if (!is.null(names(agg_terms)[i]) && !is.null(agg_terms[[i]])) {
+        q_r$aggs[[names(agg_terms)[i]]] = list(terms = list(field = agg_terms[[i]], size = agg_size))
+      }
+    }
+  }
+  
+  # Add sorting (ensure correct structure without extra brackets)
+  if (length(sort_terms) > 0) {
+    q_r$sort <- lapply(names(sort_terms), function(field) {
+      setNames(list(order = sort_terms[[field]]), field)
+    })
+  }
+  
+  # Convert the query structure to a JSON string
+  q <- toJSON(q_r, pretty = TRUE, auto_unbox = T) 
+  
+  # Print JSON output if print_json is TRUE
+  if (print_json){
+    print(q)
+  }
+  
+  # Return the JSON query string
+  q
+}
+
+
+#tests
+if(F){
+  query <- build_query(size = 10,query_terms = list(metadata.created_by_id="123953"),sort_terms = list(event.date_start = list(order = "desc")))
+  #query <- paste0('{"size": "50","query":{"bool":{"must":[{"term":{"metadata.created_by_id":"1"}}]}},"sort":[{"event.date_start" : {"order" : "desc"}}]}')
+  
+  config <- config::get()
+  auth_header <- paste('USER', config$indicia_warehouse_client_id, 'SECRET', config$indicia_warehouse_secret, sep = ':')
+  get_data_helper(base_url = config$indicia_warehouse_base_url, auth_header = auth_header,query = query)
+  
+}
