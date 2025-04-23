@@ -1,0 +1,117 @@
+---
+title: "Your Wildlife Recording Challenge!"
+params:
+    user_name: ""
+    user_data: ""
+    bg_data: ""
+    bg_computed_objects: ""
+    user_computed_objects: ""
+    user_email: "UNKNOWN"
+    content_key: ""
+    config: ""
+footer-date-time: "`r  format(Sys.time(), '%Y-%m-%d %H:%M:%S %Z')`"
+user-email: "`r params$user_email`"
+---
+
+```{r setup, include=FALSE}
+library(dplyr)
+library(ggplot2)
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+```
+
+```{r calculations, include=FALSE}
+# Get the current date
+current_date <- Sys.Date()
+start_date <- current_date - 7  # Past 7 days
+current_month <- format(current_date,"%B")
+
+
+# Filter the user's data for the last 7 days
+last_week_data <- params$user_data %>% 
+  filter(date >= start_date, date < current_date)
+
+prev_week_data <- params$user_data %>% 
+  filter(date >= (start_date-7), date < start_date)
+
+# Calculate species per visit statistics
+visit_stats <- last_week_data %>%
+  mutate(location = paste0(latitude,longitude)) %>%
+  group_by(date,location) %>% 
+  summarise(n_species = n_distinct(species)) %>%
+  mutate(date = as.Date(date))
+
+prev_stats <- prev_week_data %>%
+  mutate(location = paste0(latitude,longitude)) %>%
+  group_by(date,location) %>% 
+  summarise(n_species = n_distinct(species)) %>%
+  mutate(date = as.Date(date))
+
+avg_species_per_visit <- round(mean(visit_stats$n_species, na.rm = TRUE), 1)
+max_species_visit <- max(visit_stats$n_species, na.rm = TRUE)
+prev_max_species_visit <- max(prev_stats$n_species, na.rm = TRUE)
+
+# Species per day in the past 7 days
+last_week <- current_date - c(1,2,3,4,5,6,7)
+species_per_day_week <- last_week_data %>% 
+  mutate(location = paste0(latitude,longitude)) %>%
+  group_by(date,location) %>% 
+  summarise(n_species = n_distinct(species)) %>%
+  group_by(date) %>%
+  summarise(n_species = max(n_species)) %>%
+  mutate(date = as.Date(date)) %>%
+  left_join(data.frame(date = last_week),.) %>%
+  mutate(n_species = if_else(is.na(n_species),0,n_species))
+
+# Encouraging message
+if (!is.na(avg_species_per_visit)) {
+  challenge_message <- paste0(
+    "Last week, you submitted ",nrow(visit_stats)," lists and recorded an average of ", avg_species_per_visit, 
+    " species per visit. Your longest list had ", max_species_visit, " species! In the previous week your longest list had ",prev_max_species_visit," species."
+  )
+} else {
+  challenge_message <- "You haven't recorded any species this week—why not take a few minutes to explore?"
+}
+```
+
+# Hello `r params$user_name`!
+
+## Why record species 'lists'?
+
+Recording as many species as possible provides scientists with valuable insights into the biodiversity of a given area. When we talk about species 'lists', we're referring to documenting more than just one or two striking or easily noticeable species—it's about observing and recording as many different species as you can find in a location.
+
+`r challenge_message`
+
+```{r plot}
+# Records per day plot for the past 7 days
+ggplot(species_per_day_week, aes(x = date, y = n_species)) +
+  geom_col(fill = "#92A41A") +
+  theme_minimal(base_size = 18) +
+  labs(x = "Date", y = "Length of longest list")+
+  scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(min(x), (max(x) + 1) * 1.1)))))+
+  scale_x_date(date_breaks = 'day', 
+              date_labels = '%a')+
+  geom_hline(yintercept = 5,alpha= 0)+
+  theme(panel.grid.minor.x = element_blank())
+```
+
+## Your Challenge for This Week!
+
+
+
+Try adding **just one more species** per visit! Taking an extra moment to check your surroundings could reveal more plants, birds, or insects. 
+
+**Quick Tip:** Before submitting, look around—are there any species you might have missed?
+
+## Why Does This Matter?
+
+Recording complete lists helps scientists and conservationists **better understand biodiversity.** The more species you log per visit, the more valuable your data becomes! 🌍
+
+## Ready to Try?
+
+Next time you're out, challenge yourself to **record just one extra species**. It makes a big difference!
+
+[Log a New Visit Now on iRecord](#)
+
+Thank you for contributing to biodiversity monitoring! 
+
+*The iRecord Team*

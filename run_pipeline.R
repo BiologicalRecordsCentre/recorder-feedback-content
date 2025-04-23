@@ -28,45 +28,50 @@ config <- config::get()
 #export the R code from here as a R file
 #knitr::purl(input = "run_pipeline.Rmd", output = "run_pipeline.R",documentation = 0)
 
-# GATHER
-source("R/gather/get_subscribers_from_controller.R")
-# Get subscribers for the list and write the data frame
-subscribers_df <- get_subscribers_from_controller(api_url = config$controller_app_base_url, 
-                                                  email_list_id = config$controller_app_list_id, 
-                                                  api_token = config$controller_app_api_key) 
-write.csv(subscribers_df,config$participant_data_file,row.names = F)
 
-# get records data
-source("R/gather/get_records_from_indicia.R")
-records_data <- data.frame()#create an empty data frame
-for (i in 1:nrow(subscribers_df)){
-  data_out <- get_user_records_from_indicia(base_url = config$indicia_warehouse_base_url, 
-                                            client_id = config$indicia_warehouse_client_id,
-                                            shared_secret = config$indicia_warehouse_secret,
-                                            user_warehouse_id = subscribers_df$user_id[i],
-                                            n_records = 100)
-  
-  if (data_out$hits$total$value >0){
-    #any intermediate data processing
-    latlong <- data_out$hits$hits$`_source`$location$point
-    
-    #extract all the columns you need
-    vernacular_names <- data_out$hits$hits$`_source`$taxon$vernacular_name
-    if(is.null(vernacular_names)){vernacular_names[is.null(vernacular_names)]<-""}
-    
-    user_records <- data.frame(latitude = sub(",.*", "", latlong),
-                               longitude = sub(".*,", "", latlong),
-                               species = data_out$hits$hits$`_source`$taxon$taxon_name,
-                               species_vernacular = vernacular_names,
-                               date = data_out$hits$hits$`_source`$event$date_start,
-                               user_id = data_out$hits$hits$`_source`$metadata$created_by_id
-    )
-    
-    records_data <- rbind(records_data,user_records)
-  }
+if(config$gather_from_controller_app){
+  # GATHER
+  source("R/gather/get_subscribers_from_controller.R")
+  # Get subscribers for the list and write the data frame
+  subscribers_df <- get_subscribers_from_controller(api_url = config$controller_app_base_url, 
+                                                    email_list_id = config$controller_app_list_id, 
+                                                    api_token = config$controller_app_api_key) 
+  write.csv(subscribers_df,config$participant_data_file,row.names = F)
 }
 
-write.csv(records_data,config$data_file,row.names = F)#save the data
+if(config$gather_from_indicia){
+  # get records data
+  source("R/gather/get_records_from_indicia.R")
+  records_data <- data.frame()#create an empty data frame
+  for (i in 1:nrow(subscribers_df)){
+    data_out <- get_user_records_from_indicia(base_url = config$indicia_warehouse_base_url, 
+                                              client_id = config$indicia_warehouse_client_id,
+                                              shared_secret = config$indicia_warehouse_secret,
+                                              user_warehouse_id = subscribers_df$user_id[i],
+                                              n_records = 100)
+    
+    if (data_out$hits$total$value >0){
+      #any intermediate data processing
+      latlong <- data_out$hits$hits$`_source`$location$point
+      
+      #extract all the columns you need
+      vernacular_names <- data_out$hits$hits$`_source`$taxon$vernacular_name
+      if(is.null(vernacular_names)){vernacular_names[is.null(vernacular_names)]<-""}
+      
+      user_records <- data.frame(latitude = sub(",.*", "", latlong),
+                                 longitude = sub(".*,", "", latlong),
+                                 species = data_out$hits$hits$`_source`$taxon$taxon_name,
+                                 species_vernacular = vernacular_names,
+                                 date = data_out$hits$hits$`_source`$event$date_start,
+                                 user_id = data_out$hits$hits$`_source`$metadata$created_by_id
+      )
+      
+      records_data <- rbind(records_data,user_records)
+    }
+  }
+  
+  write.csv(records_data,config$data_file,row.names = F)#save the data
+}
 
 
 # GENERATE

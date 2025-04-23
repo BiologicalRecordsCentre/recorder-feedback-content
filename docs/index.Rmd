@@ -20,6 +20,10 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r}
+setwd("docs")
+```
+
 ## Overview
 
 Biological recorders contribute valuable biodiversity data; and extensive infrastructure exists to support dataflows from recorders submitting records to databases. However, we lack infrastructure dedicated to providing informative feedback to recorders in response to the data they have contributed. By developing this infrastructure, we can create a feedback loop leading to better data and more engaged data providers.
@@ -102,8 +106,6 @@ Or alternatively you can use the RStudio IDE to clone the repository to a new pr
 Use terminal to copy files with new names. Or do the equivalent action in file explorer or RStudio
 
 ```
-cp example_targets.R _targets.R
-cp example_run_pipeline.R run_pipeline.R
 cp example_config.yml config.yml
 ```
 
@@ -124,8 +126,8 @@ This will ensure that you have all the required packages installed and ready to 
 
 To help you get started there is a very minimal example of generating feedback items from some simulated data. Run the provided script generate_test_data.R to generate test data for email rendering. Execute the following command in R or RStudio:
 
-```
-source("R/generate_test_data.R")
+```{r}
+source("R/gather/generate_test_data.R")
 ```
 
 This script will create sample data that you can use to test the email generation process. The sample data is saved as `simulated_participants.csv` and `data/simulated_data_raw.csv`.

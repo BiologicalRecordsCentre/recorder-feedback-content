@@ -6,8 +6,12 @@ default:
   default_template_file: "templates/example.Rmd"
   template_html_file: "templates_html/basic_template.html"
   pandoc_path: "C:/Program Files/RStudio/resources/app/bin/quarto/bin/tools"
-  controller_app_base_url: ""
-  controller_app_api_key: ""
+  gather_from_controller_app: False
+  controller_app_base_url: "http://localhost:5000/api/"
+  controller_app_web_url: "http://localhost:5000/"
+  controller_app_api_key: "complicated_token"
+  controller_app_list_id: "1"
+  gather_from_indicia: False
   indicia_warehouse_base_url: ""
   indicia_warehouse_client_id: ""
   indicia_warehouse_secret: ""
@@ -20,5 +24,5 @@ default:
   mail_default_sender: ''
   mail_default_name: 'Recorder Feedback'
   mail_default_subject: "Your personalised recorder feedback"
-  mail_creds: ""
-  
+  mail_creds: "anonymous"
+  mail_test_recipient: ''
