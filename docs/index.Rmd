@@ -20,7 +20,7 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r}
+```{r,eval = F}
 setwd("docs")
 ```
 
@@ -38,7 +38,7 @@ The code in this repository is developed to programmatically generating effectiv
 
 This work inherits some ideas and concept from the MyDECIDE campaign delivered under the DECIDE project. The code and scripts from MyDECIDE are available here: https://github.com/simonrolph/DECIDE-WP3-newsletter/tree/main
 
-## How it works
+## Pipeline
 
 The email generation process is managed by R package targets. The targets package is a Make-like pipeline tool for statistics and data science in R. The package skips costly runtime for tasks that are already up to date and orchestrates the necessary computation. The pipeline is described in `_targets.R`. Pipeline inputs and outputs
 
@@ -61,27 +61,111 @@ The email generation process is managed by R package targets. The targets packag
 
  * Recorder feedback items (`.html`)
  * Metadata table (`.csv`)
+ 
+All the R code for making the pipeline work is located in the `R` folder, you shouldn't need to edit any of these files.
 
 Below is a schematic diagram providing an overview of the email generation process. Input data is loaded from an external source (e.g. an Indicia database). For each person/place/project the data is split into the focal data (relating to the person, place or project you which to deliver targeted feedback to) and the background data (all other data). Computations are then applied to these datasets, this might be to calculate summary statistics such as the number of records made in a certain period. The data and the computations are fed into an Rmarkdown document which contains code which you have developed to generate effective digital engagements. A HTML template is also combined here to specify any generic elements such as formatting, header/footers, and logos.
 
 ![](img/recorder_feedback_overview.drawio.svg)
 
+## Gathering Data
 
 The input data is made available in the `/data` folder. It must be in a certain format in order to work correctly. During the pipeline the data is split into the `user_data` which only includes the species records of the target user and the `bg_data` (background) which is the data for everyone.
 
-The email rendering is done using R markdown. R markdown is used as a very flexible templating system to allow developers to documents in html (and other formats). It combines markdown with code chunks. We use parameterised R markdown to render the email with user-specific data and computed data-derived objects.
+## Generating content
 
-Content in the emails can be generated using frequently R packages such as dplyr for data manipulation and ggplot2 for creating data visualisations. There are various R packages available for generating maps but there are example scripts that use ggspatial.
+Content generation for the email feedback is handled using **parameterised R Markdown** and a flexible templating system. This enables the creation of personalised, data-driven emails in HTML format for each recipient.
 
-The emails are rendered in an email-ready format borrowed from the R package blastula. They are rendered as 'self contained' html files so there are no external local image files.
+### Rendering with R Markdown
 
-It is not recommended to carry out computationally heavy calculations within the R markdown template, therefore a computation step can be done before rendering. These computations should be coded in scripts located in `computations`. The computations are applied separately for the `user_data` and `bg_data`, but this can be the same or different computation scripts.
+We use [R Markdown](https://rmarkdown.rstudio.com/) to render the emails. This format allows for combining plain markdown with embedded R code chunks, making it ideal for integrating visualisations, text, and summaries dynamically.
 
-A configuration file (`config.yml`), which is loaded in using `config::get()`, is where you define the data file, the computation scripts and the template file.
+- The `.Rmd` template receives inputs via parameters for:
+  - `user_data` – records specific to the target recipient
+  - `bg_data` – background records (everyone else)
+  - computed objects derived from both datasets
 
-The rendered html items are saved in a folder `renders/[batch_id]` where you have set a batch identifier. The folder contains html files for each recipient and a `.csv` with columns for each file name and the identifier.
+- The rendered output is a **self-contained HTML file**, ready for email delivery (no external image dependencies).
 
-All the R code for making the pipeline work is located in the `R` folder, you shouldn't need to edit any of these files.
+### Computation Scripts
+
+Computationally expensive or reusable logic (e.g. aggregations, statistics, plots) should **not** be placed inside the `.Rmd` file. Instead, define these in separate R scripts:
+
+- Located in the `computations/` folder
+- Defined for both:
+  - `user_data` (focal computation)
+  - `bg_data` (background computation)
+- These scripts return pre-processed R objects (tables, plots, metrics) that are injected into the R Markdown template
+
+### Templates
+
+- **R Markdown Template (`.Rmd`)**: Customisable to include user-specific content, visual summaries, and feedback messages.
+- **HTML Layout Template (`.html`)**: Provides structure and styling (e.g., branding, headers/footers, colors).
+
+### Output Location
+
+All rendered email content is stored in the `renders/[batch_id]/` folder:
+
+- One HTML file per recipient
+- A metadata `.csv` file containing:
+  - `user_id`
+  - `email`
+  - rendered `file` name
+  - associated `content_key` (if used)
+
+## Sending emails
+
+After the HTML files are generated, the final step is delivering them to recipients. Email delivery is handled using the blastula package, which provides tools for sending richly formatted HTML emails directly from R. Emails are sent to addresses listed in the metadata CSV (`renders/[batch_id]/meta_table.csv`). You can manage sending credentials and settings via the config.yml file. The pipeline loops through all rows in the metadata table and sends the appropriate email to each participant.
+
+## Configuration
+
+A configuration file (`config.yml`), which is loaded in using `config::get()`, is where you define the data file, the computation scripts and the template file. This configuration file defines all the necessary settings used across the data pipeline. It follows a YAML format and is organized under the `default` configuration profile, which is typically used for local development. To activate it in R, use:
+
+### 📁 File Paths
+
+| Key                        | Description                                                 |
+|---------------------------|-------------------------------------------------------------|
+| `participant_data_file`   | Path to save or load the participant data CSV               |
+| `data_file`               | Path to save the gathered records CSV                       |
+| `computation_script_bg`   | Background computations script path                         |
+| `computation_script_user` | User-level computations script path                         |
+| `default_template_file`   | RMarkdown template for reports                              |
+| `template_html_file`      | HTML template for rendering                                 |
+| `pandoc_path`             | Path to Pandoc/Quarto binaries (for rendering RMarkdown)    |
+
+### 📥 Data Gathering
+
+| Key                         | Description                                                       |
+|----------------------------|-------------------------------------------------------------------|
+| `gather_from_controller_app` | Toggle to fetch data from the Controller App                      |
+| `controller_app_base_url`  | Base API URL of the Controller App                                |
+| `controller_app_web_url`   | Base web URL of the Controller App                                |
+| `controller_app_api_key`   | API token used to authenticate against the Controller App API     |
+| `controller_app_list_id`   | Email list ID used to fetch subscribers                           |
+
+| Key                        | Description                                                       |
+|---------------------------|-------------------------------------------------------------------|
+| `gather_from_indicia`     | Toggle to fetch user records from Indicia                         |
+| `indicia_warehouse_base_url` | Base URL of the Indicia warehouse API                          |
+| `indicia_warehouse_client_id` | Client ID for Indicia API authentication                     |
+| `indicia_warehouse_secret` | Client secret for Indicia API authentication                     |
+
+### 📧 Email Settings
+
+| Key                  | Description                                                   |
+|---------------------|---------------------------------------------------------------|
+| `mail_server`        | SMTP server address                                           |
+| `mail_port`          | SMTP port number                                              |
+| `mail_use_tls`       | Whether to use TLS encryption (TRUE/FALSE)                    |
+| `mail_use_ssl`       | Whether to use SSL encryption (TRUE/FALSE)                    |
+| `mail_username`      | SMTP login username                                           |
+| `mail_password`      | SMTP login password (if not using environment variables)      |
+| `mail_default_sender`| Default email sender address                                  |
+| `mail_default_name`  | Display name for the sender                                   |
+| `mail_default_subject` | Default subject line for outgoing emails                   |
+| `mail_creds`         | Credential mode: `"anonymous"` or `"envvar"`                 |
+| `mail_test_recipient`| Optional hardcoded recipient for testing                      |
+
 
 ## Getting started
 
@@ -126,7 +210,7 @@ This will ensure that you have all the required packages installed and ready to 
 
 To help you get started there is a very minimal example of generating feedback items from some simulated data. Run the provided script generate_test_data.R to generate test data for email rendering. Execute the following command in R or RStudio:
 
-```{r}
+```{r,eval = F}
 source("R/gather/generate_test_data.R")
 ```
 
@@ -134,11 +218,19 @@ This script will create sample data that you can use to test the email generatio
 
 `simulated_participants.csv`
 
+```{r,eval=F}
+head(read.csv("data/simulated_participants.csv"))
+```
+
 ```{r,echo=F}
 head(read.csv("../data/simulated_participants.csv"))
 ```
 
 `data/simulated_data_raw.csv`
+
+```{r,eval=F}
+head(read.csv("data/simulated_data_raw.csv"))
+```
 
 ```{r,echo=F}
 head(read.csv("../data/simulated_data_raw.csv"))
