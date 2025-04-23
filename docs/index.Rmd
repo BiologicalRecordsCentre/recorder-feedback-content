@@ -167,6 +167,58 @@ A configuration file (`config.yml`), which is loaded in using `config::get()`, i
 | `mail_test_recipient`| Optional hardcoded recipient for testing                      |
 
 
+### Scheduling jobs
+
+You can automate the execution of your `run_pipeline.R` script by setting up a **cron job** that runs your Bash script daily.
+
+#### 1. Make Sure the Bash Script Is Executable
+
+Ensure your Bash script (e.g. `run_pipeline.sh`) has execution permissions:
+
+```bash
+chmod +x run_pipeline.sh
+```
+
+#### 2️. Edit Your Crontab
+
+To add a scheduled task, open your crontab:
+
+```bash
+crontab -e
+```
+
+This opens the crontab file in your default text editor.
+
+#### 3.  Add a Cron Job Entry
+
+To run the pipeline **once daily at 7:00 AM**, add the following line to the crontab:
+
+```
+0 7 * * * /path/to/entrypoint.sh >> /path/to/logs/pipeline.log 2>&1
+```
+
+### Explanation:
+
+- `0 2 * * *` → Run at 2:00 AM every day
+- `/path/to/your/script/run_pipeline.sh` → Full path to your Bash script
+- `>> pipeline.log 2>&1` → Appends both standard output and errors to a log file
+
+> **Tip:** Always use absolute paths in cron jobs—cron runs in a minimal environment and won’t know about your user-specific `PATH`.
+
+---
+
+### 🧪 Test Your Script First
+
+You can manually run the script to confirm it works:
+
+```
+bash run_pipeline.sh
+```
+
+---
+
+Let me know if you want a version that runs multiple times a day, or only on weekdays!
+
 ## Getting started
 
 Provided in this code is a a minimal example to show how it works. This can then be used as a starting point for developing your own personalised feedback. 
