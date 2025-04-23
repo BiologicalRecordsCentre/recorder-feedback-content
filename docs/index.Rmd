@@ -20,7 +20,7 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r,eval = F}
+```{r,eval = F, echo=F}
 setwd("docs")
 ```
 
