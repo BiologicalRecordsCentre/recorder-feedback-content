@@ -146,12 +146,14 @@ for (i in 1:nrow(meta_table)) {
   email <- meta_table[i, "email"]
   
   # Perform operations
-  send_notify_app(
-    content_key = content_key,
-    user_external_key = user_id,
-    batch_id = batch_id,
-    config = config
-  )
+  if(config$gather_from_controller_app){
+    send_notify_app(
+      content_key = content_key,
+      user_external_key = user_id,
+      batch_id = batch_id,
+      config = config
+    )
+  }
   
   sender <- config$mail_default_sender
   names(sender) <- config$mail_default_name
