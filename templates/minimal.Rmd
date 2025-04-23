@@ -1,0 +1,38 @@
+---
+title: "Recorder Feedback Example Email"
+params:
+    user_name: ""
+    user_data: ""
+    bg_data: ""
+    bg_computed_objects: ""
+    user_computed_objects: ""
+    user_email: "UNKNOWN"
+    content_key: ""
+    config: ""
+footer-date-time: "`r  format(Sys.time(), '%Y-%m-%d %H:%M:%S %Z')`"
+user-email: "`r params$user_email`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F,
+                      warning = F,
+                      message = FALSE, 
+                      fig.align = 'center',
+                      error=F,
+                      results='asis')
+```
+
+
+```{css, echo=FALSE}
+body{
+  font-family: Helvetica;
+  font-size: 13pt;
+}
+
+```
+
+# Hello `r params$user_name`!
+
+This is a test
+
+Best wishes,
