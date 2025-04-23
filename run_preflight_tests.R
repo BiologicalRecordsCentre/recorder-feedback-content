@@ -94,7 +94,7 @@ tryCatch({
             subject = "Test Email",
             credentials = creds,
             verbose = TRUE)
-  print("✅ SMTP test email successfully sent to: ", test_email)
+  print("✅ SMTP test email successfully sent to: ", config$mail_test_recipient)
 }, error = function(e) {
   stop("❌ Failed to send test email: ", e$message)
 })
