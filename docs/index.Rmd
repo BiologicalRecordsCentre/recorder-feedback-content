@@ -176,7 +176,7 @@ You can automate the execution of your `run_pipeline.R` script by setting up a *
 Ensure your Bash script (e.g. `run_pipeline.sh`) has execution permissions:
 
 ```bash
-chmod +x run_pipeline.sh
+chmod +x entrypoint.sh
 ```
 
 #### 2️. Edit Your Crontab
