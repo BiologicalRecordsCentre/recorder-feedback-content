@@ -24,6 +24,7 @@ check_http_connection <- function(url, headers = list(), query = list()) {
 }
 
 # 1. Test connection to Controller App (if enabled)
+
 if (isTRUE(config$gather_from_controller_app)) {
   print("🔎 Testing Controller App API connection...")
   test_url <- paste0(config$controller_app_base_url, "lists")
@@ -70,6 +71,7 @@ if (isTRUE(config$gather_from_indicia)) {
 }
 
 #3. test email
+print("🔎 Testing email SMTP connection...")
 library(blastula)
 test_message <- prepare_test_message()
 
@@ -94,7 +96,7 @@ tryCatch({
             subject = "Test Email",
             credentials = creds,
             verbose = TRUE)
-  print("✅ SMTP test email successfully sent to: ", config$mail_test_recipient)
+  print("✅ SMTP test email successfully sent ")
 }, error = function(e) {
   stop("❌ Failed to send test email: ", e$message)
 })
