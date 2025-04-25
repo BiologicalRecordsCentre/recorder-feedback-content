@@ -40,20 +40,22 @@ subscribe_user <- function(api_url, external_key, list_id, auth_token) {
 }
 
 # Example usage
-Sys.setenv(R_CONFIG_ACTIVE = "rsconnect")
+Sys.setenv(R_CONFIG_ACTIVE = "ukceh_virtual_machine")
 config <- config::get()
 api_url <- config$controller_app_base_url
 auth_token <- config$controller_app_api_key
 
-# who you want to add
-external_key <- ""
-name <- ""
-email <- ""
+# add test users
+test_users <- read.csv("data/test_users.csv")
 list_id <- "1"
 
+for (i in 1:nrow(test_users)){
+  test_user <- test_users[i,]
+  
+  # Add user
+  add_user(api_url, paste(test_user$external_key), test_user$name, test_user$email, auth_token)
+  
+  # Subscribe user to list
+  subscribe_user(api_url, paste(test_user$external_key), list_id, auth_token)
+}
 
-# Add user
-add_user(api_url, external_key, name, email, auth_token)
-
-# Subscribe user to list
-subscribe_user(api_url, external_key, list_id, auth_token)

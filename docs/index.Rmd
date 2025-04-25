@@ -469,6 +469,32 @@ A full pipeline is included in `run_pipeline.Rmd` (also `run_pipeline.R`). This 
 - Retrieves metadata from `meta_table.csv` and participant data from the saved CSV.
 - Sends feedback emails
 
+
+#### Automation
+
+If you want to automate the pipeline you can use `crontab`. For this we use the `entrypoint.sh` script as the things that we are triggering, which then runs `run_pipeline.R`.
+
+You can create a cron job with crontab by using:
+```
+crontab -e
+```
+
+You can see what cron jobs have been created with
+```
+crontab -l
+```
+
+Which will then open a file for you to write the crontab job into. You use the crontab syntax (use crontab guru to help: https://crontab.guru/).
+
+Here's an example that triggers at 7am every day:
+```
+0 7 * * * /path/to/recorder-feedback-content/entrypoint.sh >> /path/to/recorder-feedback-content/logs/job_$(date +\%Y\%m\%d_\%H\%M\%S).log 2>&1
+```
+
+Use absolute paths because crotab runs in a minimal environment
+
+The `>>` bit means that the console output is pasted into a `.log` file with the date in the filename
+
 ## Examples
 
 Here are some examples showing what sort of feedback items are possible.

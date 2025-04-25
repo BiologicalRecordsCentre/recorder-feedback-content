@@ -104,7 +104,17 @@ Sys.unsetenv("BATCH_ID") #and unset the variable
 
 ```{r send}
 
+
+
 #SEND
+status_log <- data.frame(
+  user_id = character(),
+  email = character(),
+  status = character(),
+  message = character(),
+  stringsAsFactors = FALSE
+)
+
 source("R/send/send_notify_app.R")
 library(blastula)
 
@@ -131,40 +141,101 @@ if (!is.data.frame(meta_table)) {
 }
 
 for (i in 1:nrow(meta_table)) {
-  # Debug: Print current row being processed
-  print(paste("Processing row:", i))
   
-  # Check for required columns in meta_table
-  if (!all(c("content_key", "user_id", "file", "email") %in% colnames(meta_table))) {
-    stop("meta_table is missing required columns.")
-  }
-  
-  # Safely extract values
-  content_key <- meta_table[i, "content_key"]
-  user_id <- meta_table[i, "user_id"]
-  file <- meta_table[i, "file"]
-  email <- meta_table[i, "email"]
-  
-  # Perform operations
-  if(config$gather_from_controller_app){
-    send_notify_app(
-      content_key = content_key,
-      user_external_key = user_id,
-      batch_id = batch_id,
-      config = config
-    )
-  }
-  
-  sender <- config$mail_default_sender
-  names(sender) <- config$mail_default_name
-  
-  email_obj <- blastula:::cid_images(file)
-  smtp_send(email_obj,
-            from = sender,
-            to = email,
-            subject = config$mail_default_subject,
-            credentials = creds,
-            verbose = FALSE
-  )
+  result <- tryCatch({
+    # Debug: Print current row being processed
+    print(paste("Processing row:", i))
+    
+    # Check for required columns in meta_table
+    if (!all(c("content_key", "user_id", "file", "email") %in% colnames(meta_table))) {
+      stop("meta_table is missing required columns.")
+    }
+    
+    # Safely extract values
+    content_key <- meta_table[i, "content_key"]
+    user_id <- meta_table[i, "user_id"]
+    file <- meta_table[i, "file"]
+    email <- meta_table[i, "email"]
+    
+    # Perform operations
+    if(config$gather_from_controller_app){
+      send_notify_app(
+        content_key = content_key,
+        user_external_key = user_id,
+        batch_id = batch_id,
+        config = config
+      )
+    }
+    
+    sender <- config$mail_default_sender
+    names(sender) <- config$mail_default_name
+    email_obj <- blastula:::cid_images(file)
+    
+    smtp_send(
+        email_obj,
+        from = sender,
+        to = email,
+        subject = config$mail_default_subject,
+        credentials = creds,
+        verbose = FALSE
+      )
+      data.frame(
+        user_id = user_id,
+        email = email,
+        status = "Success",
+        message = "Email sent",
+        stringsAsFactors = FALSE
+      )
+      status
+    }, error = function(e) {
+      print("Email not sent")
+      data.frame(
+        user_id = user_id,
+        email = email,
+        status = "Failed",
+        message = e$message,
+        stringsAsFactors = FALSE
+      )
+    })
+  status_log <- rbind(status_log,result)
 }
+```
+
+Send email to admin with status
+
+```{r}
+status_lines <- apply(status_log, 1, function(row) {
+  paste(
+    "User ID:", row["user_id"], 
+    "| Email:", row["email"], 
+    "| Status:", row["status"], 
+    "| Message:", row["message"]
+  )
+})
+
+report_email <- compose_email(
+  body = md(
+    paste0(
+      "### Email Send Summary",
+      "
+      Total attempted: ", nrow(status_log),
+      "
+      ✅ Success: ", sum(status_log$status == "Success"), 
+      "
+      ❌ Failed: ", sum(status_log$status == "Failed"),
+      "
+      Please check logs for more information"
+    )
+    ),
+  footer = Sys.time()
+  )
+
+smtp_send(
+  email = report_email,
+  from = sender,
+  to = config$mail_test_recipient,  # your email
+  subject = paste("Email Batch Status Report -", Sys.Date()),
+  credentials = creds,
+  verbose = FALSE
+)
 ```

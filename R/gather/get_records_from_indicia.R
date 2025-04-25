@@ -158,4 +158,14 @@ if(F){
   auth_header <- paste('USER', config$indicia_warehouse_client_id, 'SECRET', config$indicia_warehouse_secret, sep = ':')
   get_data_helper(base_url = config$indicia_warehouse_base_url, auth_header = auth_header,query = query)
   
+  
+  
+  query <- build_query(size = 1,query_terms = list(id="41050498"))
+  #query <- paste0('{"size": "50","query":{"bool":{"must":[{"term":{"metadata.created_by_id":"1"}}]}},"sort":[{"event.date_start" : {"order" : "desc"}}]}')
+  
+  config <- config::get()
+  auth_header <- paste('USER', config$indicia_warehouse_client_id, 'SECRET', config$indicia_warehouse_secret, sep = ':')
+  test_data <- get_data_helper(base_url = config$indicia_warehouse_base_url, auth_header = auth_header,query = query)
+  test_data$hits$hits$`_source`$metadata$created_by_id  
+  
 }
