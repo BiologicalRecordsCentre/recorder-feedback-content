@@ -163,7 +163,6 @@ for (i in 1:nrow(meta_table)) {
         message = "Email sent",
         stringsAsFactors = FALSE
       )
-      status
     }, error = function(e) {
       print("Email not sent")
       data.frame(
