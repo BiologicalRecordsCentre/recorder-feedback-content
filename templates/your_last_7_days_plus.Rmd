@@ -1,0 +1,236 @@
+---
+title: "Recorder Feedback Example Email"
+params:
+    user_name: ""
+    user_data: ""
+    bg_data: ""
+    bg_computed_objects: ""
+    user_computed_objects: ""
+    user_email: "UNKNOWN"
+    content_key: ""
+    config: ""
+footer-date-time: "`r  format(Sys.time(), '%Y-%m-%d %H:%M:%S %Z')`"
+user-email: "`r params$user_email`"
+---
+
+```{r,echo=FALSE,include=FALSE}
+# required data descriptions
+# user_name: character, their name
+# user_data and bg_data: data frame format:
+# 'data.frame':    100 obs. of  6 variables:
+##  $ latitude          : num  
+##  $ longitude         : num  
+##  $ species           : chr  
+##  $ species_vernacular: chr  
+##  $ date              : chr  
+##  $ user_id           : int
+#bg / user_computed_objects: none
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F,
+                      warning = F,
+                      message = FALSE, 
+                      fig.align = 'center',
+                      error=F,
+                      results='asis')
+
+library(gemini.R)
+setAPI(Sys.getenv("GEMINI_API_KEY"))
+```
+
+```{r calculations, include=F}
+# Get the current date
+current_date <- Sys.Date()
+
+# Calculate the date 7 days prior
+start_date <- current_date - 7
+
+# Filter the data for the past 7 days
+last_week_data <- params$user_data %>% 
+  filter(date >= start_date, date < current_date)
+
+# Calculate metrics for the past 7 days
+n_species_week <- last_week_data %>% pull(species) %>% unique() %>% length()
+n_records_week <- last_week_data %>% nrow()
+n_days_week <- last_week_data %>% 
+  pull(date) %>% 
+  unique() %>% 
+  length()
+
+# Top species recorded in the past 7 days
+species_names_week <- last_week_data %>% 
+  group_by(species) %>% 
+  summarise(n = n()) %>% 
+  arrange(desc(n)) %>%
+  pull(species)
+
+last_week <- current_date - c(1,2,3,4,5,6,7)
+
+# Records per day in the past 7 days
+records_per_day_week <- last_week_data %>% 
+  group_by(date) %>% 
+  summarise(number_of_records = n()) %>%
+  mutate(date = as.Date(date)) %>%
+  left_join(data.frame(date = last_week),.) %>%
+  mutate(number_of_records = if_else(is.na(number_of_records),0,number_of_records))
+
+#get the weather history
+if(n_records_week>0){
+  average_location <- c(median(last_week_data$latitude,na.rm=T),median(last_week_data$longitude,na.rm=T))
+  library(openmeteo)
+  history <- weather_history(
+    average_location,
+    Sys.Date()-7,
+    Sys.Date()-1,
+    daily=list("temperature_2m_max","temperature_2m_min","precipitation_sum","wind_speed_10m_max")
+  ) %>%
+  mutate(
+    date_fmt = format(as.Date(date), "%b %d"),
+    max_temp = sprintf("%.1f°C", daily_temperature_2m_max),
+    min_temp = sprintf("%.1f°C", daily_temperature_2m_min),
+    precip = ifelse(is.na(daily_precipitation_sum),
+                    "N/A", sprintf("%.1fmm", daily_precipitation_sum)),
+    wind = sprintf("%.1f km/h", daily_wind_speed_10m_max),
+    summary = paste0(date_fmt, ": Max ", max_temp,
+                     ", Min ", min_temp, ", Precip ", precip,
+                     ", Max Wind ", wind)
+  ) %>%
+  pull(summary) %>% paste(collapse = ". ")
+
+#get the weather forecast
+  forecast <- weather_forecast(
+    average_location,
+    Sys.Date(),
+    Sys.Date()+7,
+    daily=list("temperature_2m_max","temperature_2m_min","precipitation_sum","wind_speed_10m_max")
+  ) %>%
+  mutate(
+    date_fmt = format(as.Date(date), "%b %d"),
+    max_temp = sprintf("%.1f°C", daily_temperature_2m_max),
+    min_temp = sprintf("%.1f°C", daily_temperature_2m_min),
+    precip = ifelse(is.na(daily_precipitation_sum),
+                    "N/A", sprintf("%.1fmm", daily_precipitation_sum)),
+    wind = sprintf("%.1f km/h", daily_wind_speed_10m_max),
+    summary = paste0(date_fmt, ": Max ", max_temp,
+                     ", Min ", min_temp, ", Precip ", precip,
+                     ", Max Wind ", wind)
+  ) %>%
+  pull(summary) %>% paste(collapse = ". ")
+  
+} else {
+  history <- "no data available, do not mention weather"
+  forecast <- "no data available, do not mention weather"
+}
+
+
+call_llm <- function(prompt,role = "You are an ecologist (in the style of david attenborough, nick baker, bill oddie, kate humble) who has a good understanding of wildlife. You are familiar with working with citizen science data sets and its challenges such as spatio-temporal biases, issues with presence-only recording, preference for recording unusual or charistmatic species. Don't be too over enthusiastic, try to be balanced and objective. The recipient of your responses is someone engaged with biological recording, the act or collecting records of species at a place at a time, this is unstructured monitoring. If mentioning a species use it's common name (if applicable) but add its scientific name in brackets aftwards.Please provide text in prose as if it was part of a message to the recorder."){
+  full_prompt <- paste("<System>",role,"</system> <prompt>",prompt,"</prompt>")
+  gemini.R::gemini(full_prompt)
+}
+
+```
+
+```{r packages, include =F}
+library(dplyr) #wrangling
+library(ggplot2) #plotting
+library(ggspatial) #maps
+library(sf)
+library(htmltools)
+library(gemini.R)
+```
+
+```{css, echo=FALSE}
+body{
+  font-family: Helvetica;
+  font-size: 13pt;
+}
+
+```
+
+# Hello `r params$user_name`!
+
+Welcome to `r weekdays(current_date)`'s Nature Diary for the past 7 days. Let’s dive into the highlights of your recording journey. 🌍✨ This email contains content generated by AI and therefore might feature inaccuracies or errors.
+
+## Your Activity
+
+```{r}
+
+text0 <- paste0(
+  "In the past 7 days (",
+  Sys.Date()-7,
+  " to ",
+  Sys.Date(),
+  ") you recorded on ",
+  n_days_week," day",
+  if(n_days_week!=1){"s"},
+  " submitting a total of ",
+  n_records_week,
+  " records. You recorded ",
+  n_species_week
+)
+
+text05 <- paste0("The weather was: ",history,".")
+
+if (n_records_week>0){
+  text1 <- paste0("Your top species sightings included: ",paste0(head(species_names_week,30),collapse = ", "),". Wow!")
+} else {
+  text1 <- "You haven't recorded anything this week, what might you see next?"
+}
+
+text_full <- call_llm(paste("Rephrase this, adding additional ecology information, if they have not recorded then do not mention other species they might see: ",text0,text05,text1))
+
+cat(text_full)
+
+# 
+# call_llm(paste("Rephrase this, adding additional ecology information, don't make recommendations: ","In the past 7 days you recorded on 1 day submitting a total of 1 records. You recorded 1 different species. Your top species sightings included: Aix galericulata"))
+# 
+# call_llm(paste("Rephrase this, adding additional ecology information, don't make recommendations: ","In the past 7 days you recorded on 1 day submitting a total of 1 records. You recorded 1 different species. Your top species sightings included: Gomphus vulgatissimus."))
+# 
+# call_llm(paste("Rephrase this, adding additional ecology information, don't make recommendations: ","In the past 7 days you recorded on 4 days submitting a total of 34 records. You recorded 27 different species.Your top species sightings included: Episyrphus balteatus, Drosophila suzukii, Melanostoma scalare, Meliscaeva auricollis, Myathropa florea."))
+
+```
+
+
+
+Here’s how your activity shaped up through the week:
+
+```{r plot}
+# Records per day plot for the past 7 days
+ggplot(records_per_day_week, aes(x = date, y = number_of_records)) +
+  geom_col(fill = "#92A41A") +
+  theme_minimal(base_size = 18) +
+  labs(x = "Date", y = "Number of records")+
+  scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(min(x), (max(x) + 1) * 1.1)))))+
+  scale_x_date(date_breaks = 'day', 
+              date_labels = '%a')+
+  geom_hline(yintercept = 5,alpha= 0)+
+  theme(panel.grid.minor.x = element_blank())
+```
+
+## What next?
+
+```{r}
+call_llm(
+  paste0(
+    "You previously provided this information to the recorder: ",
+    text_full,
+    ". The weather next week will be:",
+    forecast,
+    ". Please make some helpful recommendations of some recording activity they could do in the next week."
+  )
+) %>% cat()
+
+```
+
+## A Big Thank You!
+
+`r call_llm("Rephrase this: Every single record you log plays a vital role in understanding and protecting biodiversity. Your efforts are truly making a difference.")`
+
+We’d love to hear your thoughts! 🌟 [Share your feedback here](`r paste0(params$config$controller_app_web_url,'submit_feedback/',params$content_key)`)
+
+If you’d prefer to pause these updates, [unsubscribe here](`r paste0(params$config$controller_app_web_url,'unsubscribe/',params$content_key)`)
+
+Here’s to more discoveries in the wild,
+
+*The iRecord Team*

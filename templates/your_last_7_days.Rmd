@@ -13,6 +13,20 @@ footer-date-time: "`r  format(Sys.time(), '%Y-%m-%d %H:%M:%S %Z')`"
 user-email: "`r params$user_email`"
 ---
 
+```{r,echo=FALSE,include=FALSE}
+# required data descriptions
+# user_name: character, their name
+# user_data and bg_data: data frame format:
+# 'data.frame':    100 obs. of  6 variables:
+##  $ latitude          : num  
+##  $ longitude         : num  
+##  $ species           : chr  
+##  $ species_vernacular: chr  
+##  $ date              : chr  
+##  $ user_id           : int
+#bg / user_computed_objects: none
+```
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = F,
                       warning = F,
