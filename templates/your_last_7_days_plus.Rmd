@@ -225,7 +225,7 @@ call_llm(
 
 ## A Big Thank You!
 
-`r call_llm("Rephrase this: Every single record you log plays a vital role in understanding and protecting biodiversity. Your efforts are truly making a difference.")`
+Every single record you log plays a vital role in understanding and protecting biodiversity. Your efforts are truly making a difference.
 
 We’d love to hear your thoughts! 🌟 [Share your feedback here](`r paste0(params$config$controller_app_web_url,'submit_feedback/',params$content_key)`)
 

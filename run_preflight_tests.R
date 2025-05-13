@@ -39,6 +39,9 @@ if (isTRUE(config$gather_from_controller_app)) {
 
 # 2. Test connection to Indicia Warehouse (if enabled)
 source("R/gather/get_records_from_indicia.R")
+indicia_warehouse_base_url <- Sys.getenv("INDICIA_WAREHOUSE_BASE_URL")
+indicia_warehouse_client_id <- Sys.getenv("INDICIA_WAREHOUSE_CLIENT_ID")
+indicia_warehouse_secret <- Sys.getenv("INDICIA_WAREHOUSE_SECRET")
 
 test_indicia_elasticsearch_connection <- function(base_url, client_id, shared_secret) {
   print("🔎 Testing Indicia Warehouse Elasticsearch connection...")
@@ -62,11 +65,11 @@ test_indicia_elasticsearch_connection <- function(base_url, client_id, shared_se
   })
 }
 
-if (isTRUE(config$gather_from_indicia)) {
+if (grepl("indicia",config$gather_bio_script)) {
   test_indicia_elasticsearch_connection(
-    base_url = config$indicia_warehouse_base_url,
-    client_id = config$indicia_warehouse_client_id,
-    shared_secret = config$indicia_warehouse_secret
+    base_url = indicia_warehouse_base_url,
+    client_id = indicia_warehouse_client_id,
+    shared_secret = indicia_warehouse_secret
   )
 }
 
