@@ -58,7 +58,8 @@ test_indicia_elasticsearch_connection <- function(base_url, client_id, shared_se
     if (!is.null(result$hits$total$value) && result$hits$total$value >= 0) {
       print("✅ Indicia Elasticsearch API is reachable and returned results.")
     } else {
-      stop("⚠️ Indicia Elasticsearch responded but did not return expected structure.")
+      
+      stop(paste0("⚠️ Indicia Elasticsearch responded but no records returned: ", paste0(result,collapse = " - ")))
     }
   }, error = function(e) {
     stop(sprintf("❌ Failed to connect to Indicia Elasticsearch: %s", e$message))
