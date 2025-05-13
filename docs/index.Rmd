@@ -145,10 +145,10 @@ A configuration file (`config.yml`), which is loaded in using `config::get()`, i
 
 | Key                        | Description                                                       |
 |---------------------------|-------------------------------------------------------------------|
-| `gather_from_indicia`     | Toggle to fetch user records from Indicia                         |
-| `indicia_warehouse_base_url` | Base URL of the Indicia warehouse API                          |
-| `indicia_warehouse_client_id` | Client ID for Indicia API authentication                     |
-| `indicia_warehouse_secret` | Client secret for Indicia API authentication                     |
+| `gather_bio_script`     | Filepath to script which gathers biodiversity data                         |
+
+in `.Renviron` you need to provide any secrets/keys needed by the script define in `gather_bio_script`. For example in the provided `R/gather/gather_indicia.R` there is a call for `Sys.getenv("INDICIA_WAREHOUSE_SECRET")` which must be provided in .Renviron
+
 
 ### 📧 Email Settings
 
@@ -197,7 +197,7 @@ To run the pipeline **once daily at 7:00 AM**, add the following line to the cro
 0 7 * * * /path/to/entrypoint.sh >> /path/to/logs/pipeline.log 2>&1
 ```
 
-### Explanation:
+Explanation:
 
 - `0 2 * * *` → Run at 2:00 AM every day
 - `/path/to/your/script/run_pipeline.sh` → Full path to your Bash script
@@ -226,8 +226,6 @@ Provided in this code is a a minimal example to show how it works. This can then
 ### Fork and clone the repository
 
 It is recommended if you are going developing your own feedback from this code that you fork the repository to your own GitHub account. Start by forking the Recorder Feedback repository on GitHub. This will create a copy of the project under your GitHub account, allowing you to make changes and contributions without affecting the original repository.
-
-![](https://github.com/BiologicalRecordsCentre/recorder-feedback/assets/17750766/dc4941bb-eff5-470e-8acd-cba16cddad4f)
 
 Clone your forked repository to your local machine using Git. Open a terminal or command prompt and execute the following command:
 
@@ -263,7 +261,7 @@ This will ensure that you have all the required packages installed and ready to 
 To help you get started there is a very minimal example of generating feedback items from some simulated data. Run the provided script generate_test_data.R to generate test data for email rendering. Execute the following command in R or RStudio:
 
 ```{r,eval = F}
-source("R/gather/generate_test_data.R")
+source("R/gather/generate_test_users.R")
 ```
 
 This script will create sample data that you can use to test the email generation process. The sample data is saved as `simulated_participants.csv` and `data/simulated_data_raw.csv`.
@@ -274,18 +272,10 @@ This script will create sample data that you can use to test the email generatio
 head(read.csv("data/simulated_participants.csv"))
 ```
 
-```{r,echo=F}
-head(read.csv("../data/simulated_participants.csv"))
-```
-
 `data/simulated_data_raw.csv`
 
 ```{r,eval=F}
 head(read.csv("data/simulated_data_raw.csv"))
-```
-
-```{r,echo=F}
-head(read.csv("../data/simulated_data_raw.csv"))
 ```
 
 ### Get participant data from controller app
@@ -346,16 +336,13 @@ The function returns a `data.frame` containing the list of subscribers from the 
 
 You’ll need the following:
 
- * Indicia Warehouse API URL (set in `config.yml`): The base URL for the Indicia warehouse.
+ * Indicia Warehouse API URL (set in `.Renviron`): The base URL for the Indicia warehouse.
  * API Authentication Credentials:
-   * client_id: Your Indicia warehouse client ID (set in `config.yml`)
-   * shared_secret: Your shared secret for authentication (set in `config.yml`)
+   * client_id: Your Indicia warehouse client ID (set in `.Renviron`)
+   * shared_secret: Your shared secret for authentication (set in `.Renviron`)
  * User Warehouse ID: The unique identifier for the user whose records you want to retrieve (contained in data downloaded from controller app)
  * Number of Records: The number of records you want to retrieve for that user (maximum is 10,000)
- 
-Once you have the required parameters, you can call the `get_user_records_from_indicia` function to retrieve species records for a specific user from the Indicia warehouse.
 
-You can see how this function can be run in a loop to generate and save data for all users in the script defined in called `get_users_and_records.R`.
 
 ### Generating feedback items
 
@@ -397,10 +384,10 @@ The data (focal and background) and the computed objects (focal and background) 
 
 The HTML template [`templates_html/basic_templatehtml`](https://github.com/BiologicalRecordsCentre/recorder-feedback/blob/main/templates_html/basic_template.html) contains the formatting for the email. You only need to edit this if you whish to change the look and feel of the emails.
 
-Finally, now we've had a look at all the components that are used in the pipeline, you can trigger the pipeline using `targets::tar_make()` or `source(run_pipeline.R`). Pipeline can be called with a command line prompt. This is useful if you want to trigger the pipeline run as part of a schedule (eg a CRON job). You can provide a batch ID with a command line argument.
+Finally, now we've had a look at all the components that are used in the pipeline, you can trigger the pipeline using `targets::tar_make()` or `source(run_pipeline.R`). Pipeline can be called with a command line prompt. This is useful if you want to trigger the pipeline run as part of a schedule (eg a CRON job).
 
 ```
-Rscript run_pipeline.R test_001
+Rscript run_pipeline.R
 ```
 
 ### View generated emails
@@ -409,10 +396,7 @@ Once the targets pipeline has completed, you can view the generated email render
 
 ```
 source("R/view_renders.R")
-view_renders(batch_id="test_001",5)
 ```
-
-Replace "test_001" with the batch identifier you set, and n with the number of renders you want to view.
 
 ## Development details
 

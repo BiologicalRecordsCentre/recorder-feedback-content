@@ -11,10 +11,7 @@ default:
   controller_app_web_url: "http://localhost:5000/"
   controller_app_api_key: "complicated_token"
   controller_app_list_id: "1"
-  gather_from_indicia: False
-  indicia_warehouse_base_url: ""
-  indicia_warehouse_client_id: ""
-  indicia_warehouse_secret: ""
+  gather_bio_script: "R/gather/gather_simulated.R"
   mail_server: ""
   mail_port: 000
   mail_use_tls: True
