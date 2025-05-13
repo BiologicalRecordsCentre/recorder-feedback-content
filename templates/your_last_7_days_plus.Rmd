@@ -79,7 +79,7 @@ records_per_day_week <- last_week_data %>%
 if(n_records_week>0){
   average_location <- c(median(last_week_data$latitude,na.rm=T),median(last_week_data$longitude,na.rm=T))
   library(openmeteo)
-  history <- weather_history(
+  history <- weather_forecast(
     average_location,
     Sys.Date()-7,
     Sys.Date()-1,
@@ -160,7 +160,7 @@ text0 <- paste0(
   "In the past 7 days (",
   Sys.Date()-7,
   " to ",
-  Sys.Date(),
+  Sys.Date()-1,
   ") you recorded on ",
   n_days_week," day",
   if(n_days_week!=1){"s"},
@@ -208,7 +208,7 @@ ggplot(records_per_day_week, aes(x = date, y = number_of_records)) +
   theme(panel.grid.minor.x = element_blank())
 ```
 
-## What next?
+## What Next?
 
 ```{r}
 call_llm(

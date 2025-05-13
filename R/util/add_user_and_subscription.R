@@ -41,6 +41,7 @@ subscribe_user <- function(api_url, external_key, list_id, auth_token) {
 
 # Example usage
 Sys.setenv(R_CONFIG_ACTIVE = "ukceh_virtual_machine")
+Sys.setenv(R_CONFIG_ACTIVE = "rsconnect")
 config <- config::get()
 api_url <- config$controller_app_base_url
 auth_token <- config$controller_app_api_key

@@ -104,8 +104,6 @@ Sys.unsetenv("BATCH_ID") #and unset the variable
 
 ```{r send}
 
-
-
 #SEND
 status_log <- data.frame(
   user_id = character(),
