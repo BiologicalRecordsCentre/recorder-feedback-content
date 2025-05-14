@@ -26,6 +26,7 @@ for (i in 1:nrow(subscribers_df)){
     
     user_records <- data.frame(latitude = sub(",.*", "", latlong),
                                longitude = sub(".*,", "", latlong),
+                               location_name = data_out$hits$hits$`_source`$location$verbatim_locality,
                                species = data_out$hits$hits$`_source`$taxon$taxon_name,
                                species_vernacular = vernacular_names,
                                date = data_out$hits$hits$`_source`$event$date_start,

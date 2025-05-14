@@ -56,13 +56,19 @@ if(F){
   library(curl)
   config <- config::get()
   
+  indicia_warehouse_base_url <- Sys.getenv("INDICIA_WAREHOUSE_BASE_URL")
+  indicia_warehouse_client_id <- Sys.getenv("INDICIA_WAREHOUSE_CLIENT_ID")
+  indicia_warehouse_secret <- Sys.getenv("INDICIA_WAREHOUSE_SECRET")
+  
   # Get subscribers and print the data frame
-  data_df <- get_user_records_from_indicia(base_url = config$indicia_warehouse_base_url, 
-                                           client_id = config$indicia_warehouse_client_id,
-                                           shared_secret = config$indicia_warehouse_secret,
-                                           user_warehouse_id = 1,
-                                           n_records = 1)
+  data_df <- get_user_records_from_indicia(base_url = indicia_warehouse_base_url, 
+                                           client_id = indicia_warehouse_client_id,
+                                           shared_secret = indicia_warehouse_secret,
+                                           user_warehouse_id = 50,
+                                           n_records = 100)
   print(data_df)
+  
+  data_df$hits$hits$`_source`$identification$auto_checks$output
 }
 
 
