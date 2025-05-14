@@ -270,5 +270,3 @@ If you’d prefer to pause these updates, [unsubscribe here](`r paste0(params$co
 Here’s to more discoveries in the wild,
 
 *The iRecord Team*
-
-![](https://irecord.org.uk/sites/default/files/irecord_logo.png)
