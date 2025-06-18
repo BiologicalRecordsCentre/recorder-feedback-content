@@ -7,7 +7,7 @@ batch_id <- paste0(Sys.Date(),"-",paste(sample(letters,10),collapse = ""))
 
 # Renv configuration
 if(!require(renv)){
-  install.packages("renv",repos='http://cran.r-project.org')
+  install.packages("renv")
   library(renv)
 }
 
