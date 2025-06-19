@@ -21,12 +21,6 @@ resource_files:
 #generating batch_id
 batch_id <- paste0(Sys.Date(),"-",paste(sample(letters,10),collapse = ""))
 
-# Renv configuration
-if(!require(renv)){
-  install.packages("renv",repos='http://cran.r-project.org')
-  library(renv)
-}
-
 #posit connect automatically sets up the renv environment, but if not using rsconnect then you need to manually initiate the renv environment
 if(Sys.getenv("R_CONFIG_ACTIVE") != "rsconnect"){ 
   source("renv/activate.R") #activate the renv environment

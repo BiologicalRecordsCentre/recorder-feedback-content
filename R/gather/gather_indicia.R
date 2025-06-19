@@ -10,6 +10,7 @@ records_data <- data.frame()#create an empty data frame
 
 #loop through subscribers and get their data
 for (i in 1:nrow(subscribers_df)){
+  print(paste0("Getting biological records for user ",i))
   data_out <- get_user_records_from_indicia(base_url = indicia_warehouse_base_url, 
                                             client_id = indicia_warehouse_client_id,
                                             shared_secret = indicia_warehouse_secret,
@@ -32,6 +33,8 @@ for (i in 1:nrow(subscribers_df)){
                                date = data_out$hits$hits$`_source`$event$date_start,
                                user_id = data_out$hits$hits$`_source`$metadata$created_by_id
     )
+    
+    print(paste0(nrow(user_records), " records downloaded for user"))
     
     records_data <- rbind(records_data,user_records)
   }

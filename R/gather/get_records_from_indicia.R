@@ -157,21 +157,37 @@ build_query <- function(size = 0,
 
 #tests
 if(F){
+  library(jsonlite)
+  library(httr)
+  library(curl)
+  
+  indicia_warehouse_base_url <- Sys.getenv("INDICIA_WAREHOUSE_BASE_URL")
+  indicia_warehouse_client_id <- Sys.getenv("INDICIA_WAREHOUSE_CLIENT_ID")
+  indicia_warehouse_secret <- Sys.getenv("INDICIA_WAREHOUSE_SECRET")
+  
   query <- build_query(size = 10,query_terms = list(metadata.created_by_id="123953"),sort_terms = list(event.date_start = list(order = "desc")))
   #query <- paste0('{"size": "50","query":{"bool":{"must":[{"term":{"metadata.created_by_id":"1"}}]}},"sort":[{"event.date_start" : {"order" : "desc"}}]}')
   
   config <- config::get()
-  auth_header <- paste('USER', config$indicia_warehouse_client_id, 'SECRET', config$indicia_warehouse_secret, sep = ':')
-  get_data_helper(base_url = config$indicia_warehouse_base_url, auth_header = auth_header,query = query)
+  auth_header <- paste('USER', indicia_warehouse_client_id, 'SECRET', indicia_warehouse_secret, sep = ':')
+  test <- get_data_helper(base_url = indicia_warehouse_base_url, auth_header = auth_header,query = query)
   
   
   
-  query <- build_query(size = 1,query_terms = list(id="41050498"))
+  query <- build_query(size = 1,query_terms = list(id="41504208"))
   #query <- paste0('{"size": "50","query":{"bool":{"must":[{"term":{"metadata.created_by_id":"1"}}]}},"sort":[{"event.date_start" : {"order" : "desc"}}]}')
   
   config <- config::get()
-  auth_header <- paste('USER', config$indicia_warehouse_client_id, 'SECRET', config$indicia_warehouse_secret, sep = ':')
-  test_data <- get_data_helper(base_url = config$indicia_warehouse_base_url, auth_header = auth_header,query = query)
+  auth_header <- paste('USER', indicia_warehouse_client_id, 'SECRET', indicia_warehouse_secret, sep = ':')
+  test_data <- get_data_helper(base_url = indicia_warehouse_base_url, auth_header = auth_header,query = query)
   test_data$hits$hits$`_source`$metadata$created_by_id  
+  
+  indicia_warehouse_base_url <- "https://warehouse1.indicia.org.uk/index.php/services/rest/es-samples/_search"
+  query <- build_query(size = 10,query_terms = list(metadata.survey.id="101"))
+  #query <- paste0('{"size": "50","query":{"bool":{"must":[{"term":{"metadata.created_by_id":"1"}}]}},"sort":[{"event.date_start" : {"order" : "desc"}}]}')
+  
+  config <- config::get()
+  auth_header <- paste('USER', indicia_warehouse_client_id, 'SECRET', indicia_warehouse_secret, sep = ':')
+  get_data_helper(base_url = indicia_warehouse_base_url, auth_header = auth_header,query = query)
   
 }
