@@ -23,7 +23,7 @@ query <- gsub("FIND_REPLACE_USER_IDS",paste0(subscribers_df$user_id,collapse = "
 print("Querying database...")
 result <- dbGetQuery(con, query)
 result$user_id <- result$digitised_by
-result$target_flower <- sub("-.*", "", target_flower)
+result$target_flower <- sub("-.*", "", result$target_flower)
 
 print(result)
 
