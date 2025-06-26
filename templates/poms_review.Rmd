@@ -7,6 +7,8 @@ params:
     bg_computed_objects: ""
     user_computed_objects: ""
     user_email: "UNKNOWN"
+    content_key: ""
+    config: ""
 footer-date-time: "`r  format(Sys.time(), '%Y-%m-%d %H:%M:%S %Z')`"
 user-email: "`r params$user_email`"
 ---
@@ -34,8 +36,6 @@ library(ggplot2) #plotting
 library(htmltools)
 library(tidyr)
 library(knitr)
-
-#![](static/FitCount_Logo_Positive.png){width=250px}
 ```
 
 
@@ -88,10 +88,10 @@ if(sum(last_count2$count, na.rm=T)>0){
 
 ## Count activity
 
-So far in 2024 you have contributed **`r params$user_computed_objects$mean_n_fit_counts`** FIT Counts. 
+So far in 2025 you have contributed **`r params$user_computed_objects$mean_n_fit_counts`** FIT Counts. 
 
 ```{r}
-first_point <- data.frame(cumulative = 0,day = lubridate::floor_date(as.POSIXct("2024-03-01"), "day"))
+first_point <- data.frame(cumulative = 0,day = lubridate::floor_date(as.POSIXct("2025-03-01"), "day"))
 
 last_point <- params$user_computed_objects$daily_counts %>%
   mutate(cumulative = cumsum(n)) %>% tail(1)
