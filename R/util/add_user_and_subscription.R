@@ -60,3 +60,18 @@ for (i in 1:nrow(test_users)){
   subscribe_user(api_url, paste(test_user$external_key), list_id, auth_token)
 }
 
+
+# add single user
+user_name <- ""
+user_key <- ""
+user_email <- ""
+list_id <- "1"
+
+# Add user
+add_user(api_url, user_key, user_name, user_email, auth_token)
+
+# Subscribe user to list
+subscribe_user(api_url, user_key, list_id, auth_token)
+
+
+

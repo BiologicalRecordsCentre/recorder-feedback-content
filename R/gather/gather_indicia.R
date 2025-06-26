@@ -17,6 +17,8 @@ for (i in 1:nrow(subscribers_df)){
                                             user_warehouse_id = as.character(subscribers_df$user_id[i]),
                                             n_records = 100)
   
+  #print(data_out)
+  
   if (data_out$hits$total$value >0){
     #any intermediate data processing
     latlong <- data_out$hits$hits$`_source`$location$point

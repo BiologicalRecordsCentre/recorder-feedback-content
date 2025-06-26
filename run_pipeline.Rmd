@@ -22,10 +22,10 @@ resource_files:
 batch_id <- paste0(Sys.Date(),"-",paste(sample(letters,10),collapse = ""))
 
 #posit connect automatically sets up the renv environment, but if not using rsconnect then you need to manually initiate the renv environment
-if(Sys.getenv("R_CONFIG_ACTIVE") != "rsconnect"){ 
-  source("renv/activate.R") #activate the renv environment
-  renv::restore() #restore packages
-}
+# if(Sys.getenv("R_CONFIG_ACTIVE") != "rsconnect"){ 
+#   source("renv/activate.R") #activate the renv environment
+#   renv::restore() #restore packages
+# }
 
 #packages
 library(httr)
