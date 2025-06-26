@@ -1,0 +1,204 @@
+---
+title: "PoMS Feedback"
+params:
+    user_name: ""
+    user_data: ""
+    bg_data: ""
+    bg_computed_objects: ""
+    user_computed_objects: ""
+    user_email: "UNKNOWN"
+footer-date-time: "`r  format(Sys.time(), '%Y-%m-%d %H:%M:%S %Z')`"
+user-email: "`r params$user_email`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F,
+                      warning = F,
+                      message = FALSE, 
+                      fig.align = 'left',
+                      error=F,
+                      results='asis')
+```
+
+
+```{r calculations, include=F}
+#here you can do simple calculations for generating metrics that you later include in the text of the email. However if you wish to do more complex calculations it is recommended that these are done via prior (method tbc)
+
+
+
+```
+
+```{r packages, include =F}
+library(dplyr) #wrangling
+library(ggplot2) #plotting
+library(htmltools)
+library(tidyr)
+library(knitr)
+
+#![](static/FitCount_Logo_Positive.png){width=250px}
+```
+
+
+
+# Hello `r params$user_name`!
+
+## Summary
+
+You have recorded **`r params$user_computed_objects$mean_n_insects`** insects in 2024 across **`r params$user_computed_objects$mean_n_fit_counts`** FIT Counts. Nice one!
+
+## Your latest FIT Count
+
+```{r}
+last_count <- params$user_data %>% arrange(as.POSIXct(desc(date_from))) %>% head(1)
+
+last_count2 <- last_count %>%
+    pivot_longer(c(bumblebees,honeybees,solitary_bees,wasps,hoverflies,other_flies,butterflies_moths,beetles,insects_small,insects_other),names_to = "group",values_to = "count") %>%
+  mutate(group = recode(group, 
+                      bumblebees = "Bumblebees",
+                      honeybees = "Honeybees",
+                      solitary_bees = "Solitary Bees",
+                      wasps = "Wasps",
+                      hoverflies = "Hoverflies",
+                      other_flies = "Other Flies",
+                      butterflies_moths = "Butterflies and Moths",
+                      beetles = "Beetles",
+                      insects_small = "Small Insects",
+                      insects_other = "Other Insects")) %>%
+  mutate(group = factor(group,
+                      levels = rev(c("Bumblebees", "Honeybees", "Solitary Bees", "Wasps", 
+                                 "Hoverflies", "Other Flies", "Butterflies and Moths",
+                                 "Beetles", "Small Insects", "Other Insects"))))
+
+```
+
+The most recent FIT Count you did was on `r last_count$date_from %>% as.Date() %>% format("%A %d %B %Y")`, you recorded `r sum(last_count2$count, na.rm=T)` insects and the target flower was `r tolower(last_count$target_flower) %>% substr(., 1, nchar(.)-1)`. `r if_else(sum(last_count2$count, na.rm=T)==0,"Even though you recorded no insects your FIT Count still provides us with valuable data about pollinating insects!","") `
+
+```{r}
+if(sum(last_count2$count, na.rm=T)>0){
+  last_count2 %>% ggplot(aes(y= group, x= count))+
+  geom_col(fill = "#b31982")+
+  theme_minimal(base_size = 15) +
+  labs(y = "Pollinator group",x = "Number of insects")+
+  scale_x_continuous(breaks = function(x) unique(floor(pretty(seq(min(x), (max(x) + 1) * 1.1))))) # only integer values
+}
+
+```
+
+
+
+## Count activity
+
+So far in 2024 you have contributed **`r params$user_computed_objects$mean_n_fit_counts`** FIT Counts. 
+
+```{r}
+first_point <- data.frame(cumulative = 0,day = lubridate::floor_date(as.POSIXct("2024-03-01"), "day"))
+
+last_point <- params$user_computed_objects$daily_counts %>%
+  mutate(cumulative = cumsum(n)) %>% tail(1)
+
+params$user_computed_objects$daily_counts %>%
+  mutate(cumulative = cumsum(n)) %>%
+  bind_rows(first_point) %>%
+  ggplot(aes(x = day, y= cumulative)) +
+  geom_step(size = 1,colour = "#b31982") +
+  geom_point(data = last_point,size = 4,shape = 17,colour = "#b31982") +
+  scale_x_datetime(date_breaks="1 month", date_labels="%b") +
+  scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(min(x), (max(x) + 1) * 1.1)))))+
+  theme_minimal(base_size = 15)+
+  labs(x = "Date",y = "Cumulative number of FIT Counts")
+
+```
+
+Altogether, a total of **`r params$bg_computed_objects$daily_counts$n %>% sum() `** FIT Counts have been submitted to UK PoMS so far in 2024. The most FIT Counts on one day was `r params$bg_computed_objects$daily_counts$n %>% max()`! The plot below shows your FIT Count activity plotted against all counts submitted across the UK.
+
+```{r}
+
+params$bg_computed_objects$daily_counts %>%
+  mutate(type = "others") %>%
+  bind_rows(mutate(params$user_computed_objects$daily_counts,type = "you")) %>%
+  ggplot(aes(x = day,y = n,fill = type)) + 
+    geom_col(width = 86400,position="identity")+
+    scale_fill_manual(labels = c("Other FIT Counters","Your contributions"),values=c("grey","#b31982"))+
+    scale_x_datetime(date_breaks="1 month", date_labels="%b") +
+    theme_minimal(base_size = 15) +
+    labs(x = "Date",y = "Number of FIT Counts per day")+
+    facet_grid(type~.,scales = "free_y") +
+    theme(legend.position="top",legend.title = element_blank(),strip.background = element_blank(),
+  strip.text.x = element_blank(),
+  strip.text.y = element_blank())+
+  scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(min(x), (max(x) + 1) * 1.1)))))
+  
+```
+
+
+## Target flowers
+
+You've completed FIT Counts on **`r params$user_computed_objects$flower_types_recorded %>% filter(n>0) %>% nrow()`** different target flower types! 
+
+```{r}
+params$user_computed_objects$flower_types_recorded %>%
+  arrange(-n) %>%
+  mutate(" "=if_else(n>0,"✅",  " ") )%>%
+  select(" ",target_flower,n) %>%
+  rename("Target Flower" = "target_flower","FIT Counts"="n") %>%
+  kable() 
+```
+
+## Insect diversity
+
+On average, you observed `r median(params$user_data$all_insects_total, na.rm=T)` insects per fit count. Let's take a look at the types of insects you most frequently observed per FIT Count (totals from all your counts so far), and see how that compares to other FIT Counters:
+
+```{r, echo=F}
+#user's taxon groups proportions
+user_diversity <- params$user_data %>%
+  select(user_id,sample_id,bumblebees,honeybees,solitary_bees,wasps,hoverflies,other_flies,butterflies_moths,beetles,insects_small,insects_other) %>%
+  pivot_longer(c(-user_id,-sample_id)) %>%
+  group_by(user_id,name) %>%
+  summarise(average_count_per_fit = median(value,na.rm=T)) %>%
+  mutate(you = T)
+            
+
+bg_diversity <- params$bg_data %>%
+  select(user_id,sample_id,bumblebees,honeybees,solitary_bees,wasps,hoverflies,other_flies,butterflies_moths,beetles,insects_small,insects_other) %>%
+  pivot_longer(c(-user_id,-sample_id)) %>%
+  group_by(user_id,name) %>%
+  summarise(average_count_per_fit = mean(value,na.rm=T)) %>%
+  group_by(name) %>%
+  summarise(average_count_per_fit = mean(average_count_per_fit,na.rm=T)) %>%
+  mutate(you = F)
+
+diversity <- bind_rows(user_diversity,bg_diversity) %>%
+  mutate(name = recode(name, 
+                      bumblebees = "Bumblebees",
+                      honeybees = "Honeybees",
+                      solitary_bees = "Solitary Bees",
+                      wasps = "Wasps",
+                      hoverflies = "Hoverflies",
+                      other_flies = "Other Flies",
+                      butterflies_moths = "Butterflies and Moths",
+                      beetles = "Beetles",
+                      insects_small = "Small Insects",
+                      insects_other = "Other Insects")) %>%
+  mutate(name = factor(name,
+                      levels = rev(c("Bumblebees", "Honeybees", "Solitary Bees", "Wasps", 
+                                 "Hoverflies", "Other Flies", "Butterflies and Moths",
+                                 "Beetles", "Small Insects", "Other Insects"))))
+
+
+
+diversity %>%
+  ggplot(aes(y = name,x = average_count_per_fit,fill = you))+
+  geom_col(position = "dodge") +
+  scale_fill_manual(labels = c("Other FIT Counters","You"),values=c("grey","#b31982"))+
+  labs(y = "Pollinator group",x = "Average number of insects per FIT Count         ")+
+  theme_minimal(base_size = 15)+
+  theme(legend.position="top",legend.title = element_blank())
+
+```
+
+Thank you for sending in your FIT Count results! Please do continue counting when you can, the more results we have the better we are able to monitor how pollinators are doing.
+
+If you are not already on the PoMS mailing list you can join [here](https://ukpoms.org.uk/subscribe).
+
+
+
