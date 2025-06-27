@@ -9,7 +9,7 @@ tar_option_set(
   seed = as.numeric(Sys.time())
 )
 
-tar_option_set(packages = c("dplyr", "ggplot2","rmarkdown","tidyr"))
+tar_option_set(packages = c("dplyr", "ggplot2","rmarkdown","tidyr","lubridate"))
 
 #load functions needed
 source("R/generate/render_content.R")
