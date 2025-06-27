@@ -13,3 +13,5 @@ config.yml
 rsconnect
 dispatch_report.html
 run_pipeline.html
+
+java
