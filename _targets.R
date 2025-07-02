@@ -52,19 +52,21 @@ mapping <- tar_map(
   # generate a content_key
   tar_force(content_key,paste(sample(c(1:9,letters),16,replace = T),collapse = ""),force = T),
   
+  tar_target(user_params_, list(user_name = name_,
+                               user_email = email_,
+                               user_data = user_data,
+                               user_computed_objects = user_computed_objects,
+                               bg_data = raw_data,
+                               bg_computed_objects = bg_computed_objects,
+                               content_key = content_key,
+                               config = config
+  )),
+  
   #render the content
   tar_target(data_story_content, 
              render_content(
                template_file = template_file,
-               user_params = list(user_name = name_,
-                                  user_email = email_,
-                                  user_data = user_data,
-                                  user_computed_objects = user_computed_objects,
-                                  bg_data = raw_data,
-                                  bg_computed_objects = bg_computed_objects,
-                                  content_key = content_key,
-                                  config = config
-                                  ),
+               user_params = user_params_,
                user_id = user_id_,
                batch_id = batch_id,
                template_html = template_html_file

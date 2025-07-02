@@ -1,0 +1,363 @@
+---
+title: "Your Wildlife Recording Review"
+params:
+    user_name: ""
+    user_data: ""
+    bg_data: ""
+    bg_computed_objects: ""
+    user_computed_objects: ""
+    user_email: "UNKNOWN"
+    content_key: ""
+    config: ""
+footer-date-time: "`r  format(Sys.time(), '%Y-%m-%d %H:%M:%S %Z')`"
+user-email: "`r params$user_email`"
+---
+
+```{r setup, include=FALSE}
+library(dplyr)
+library(ggplot2)
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE,fig.align = 'center')
+library(lubridate)
+library(sf)
+library(ggspatial)
+
+# required data descriptions
+# user_name: character, their name
+# user_data and bg_data: data frame format:
+# 'data.frame':    100 obs. of  6 variables:
+##  $ latitude          : num  
+##  $ longitude         : num  
+##  $ species           : chr  
+##  $ species_vernacular: chr  
+##  $ date              : chr  
+##  $ user_id           : int
+#bg / user_computed_objects: none
+
+target_group <- "butterflies" # "butterflies" or "dragonflies"
+experimental_group <- "self" #"self" or "background" 
+
+```
+
+```{r, eval =FALSE}
+params <- targets::tar_read(user_params__)
+```
+
+<p align="center">
+![](static/irecord/irecord_insights.drawio.png){width=250px}
+</p>
+
+# Hello `r params$user_name`!
+
+Here are your personalised insights for your recording activity for **`r target_group`** on iRecord.
+
+
+```{r calculations, include=FALSE}
+
+# filter taxonomies
+# butterflies
+# dragonflies
+if(target_group == "butterflies"){
+  user_data <- params$user_data %>% filter(
+    species_group %in% c("insect - butterfly")
+  )
+} else if(target_group == "dragonflies"){
+  user_data <- params$user_data %>% filter(
+    species_group %in% c("insect - dragonfly (Odonata)")
+  )
+} else {
+  stop("Incorrect group supplied")
+}
+
+
+
+# Get the current date
+current_date <- Sys.Date()
+current_month <- format(current_date,"%B")
+
+
+#get sites
+sites <- st_as_sf(user_data,coords =c("longitude","latitude"),crs = 4326) %>% 
+  st_transform(27700) %>% 
+  st_coordinates() %>% #extract the coordinages
+  signif(3) %>%  #to 1km, use digits = -2 for 100m
+  data.frame() %>%
+  mutate(site_name = paste0(X,Y))
+user_data <- cbind(user_data,sites)
+
+
+
+# Filter the user's data for this year
+y1_data <- user_data %>% 
+  filter(date >= as.Date("2025-01-01"))
+  
+#last year
+y0_data <- user_data %>% 
+  filter(date < as.Date("2025-01-01"), date >= as.Date("2024-01-01")) 
+
+#sites and list length
+y1_data_lists <- y1_data %>%
+  group_by(date,site_name) %>%
+  summarise(n_records = n()) %>%
+  mutate(list_type = if_else(n_records == 1,"Single record",if_else(n_records <4,"Short list (2-3 records)","Long list (4+ records)"))) %>%
+  mutate(year = 2025,date = as.Date(date))
+
+y0_data_lists <- y0_data %>%
+  group_by(date,site_name) %>%
+  summarise(n_records = n()) %>%
+  mutate(list_type = if_else(n_records == 1,"Single record",if_else(n_records <4,"Short list (2-3 records)","Long list (4+ records)"))) %>%
+  mutate(year = 2024)%>%
+  mutate(date = as.Date(date) %m+% years(1))
+data_all_lists <- rbind(y1_data_lists, y0_data_lists) %>%
+  mutate(year = as.factor(year))
+
+
+# recording tallies
+y1_data_summarised <- y1_data %>%
+  group_by(date) %>%
+  summarise(n_records = n()) %>%
+  arrange(date) %>%
+  bind_rows(data.frame(date = "2025-01-01",n_records = 0,cumulative = 0),.) %>%
+  mutate(cumulative = cumsum(n_records),year = 2025) %>%
+  mutate(date = as.Date(date))
+  
+y0_data_summarised <- y0_data %>%
+  group_by(date) %>%
+  summarise(n_records = n()) %>%
+  arrange(date) %>%
+  bind_rows(data.frame(date = "2024-01-01",n_records = 0,cumulative = 0),.) %>%
+  mutate(cumulative = cumsum(n_records),year = 2024) %>%
+  mutate(date = as.Date(date) %m+% years(1)) # add a year
+
+#bound all data
+data_all <- rbind(y1_data_summarised, y0_data_summarised) %>%
+  mutate(year = as.factor(year))
+
+
+# species tallies
+y1_species_data_summarised <- y1_data %>%
+  group_by(species,species_vernacular) %>%
+  arrange(date) %>%
+  summarise(date = first(date)) %>%
+  ungroup() %>%
+  arrange(date) %>%
+  mutate(count = 1) %>%
+  mutate(count = cumsum(count),year= 2025) %>%
+  mutate(date = as.Date(date)) %>%
+  bind_rows(data.frame(species = "na",date = as.Date("2025-01-01"),count = 0,year = 2025),.) %>%
+  bind_rows(.,data.frame(species = "na",date = Sys.Date(),count = y1_data$species %>% unique() %>% length(),year = 2025))
+
+y0_species_data_summarised <- y0_data %>%
+  group_by(species,species_vernacular) %>%
+  arrange(date) %>%
+  summarise(date = first(date)) %>%
+  ungroup() %>%
+  arrange(date) %>%
+  mutate(count = 1) %>%
+  mutate(count = cumsum(count),year = 2024) %>%
+  mutate(date = as.Date(date) %m+% years(1)) %>% # add a year 
+  bind_rows(data.frame(species = "na",date = as.Date("2025-01-01"),count = 0,year = 2024),.) %>%
+  bind_rows(data.frame(species = "na",date = as.Date("2025-12-31"),count = nrow(y0_data),year = 2024),.)
+
+#bound all data
+data_all_species <- rbind(y1_species_data_summarised, y0_species_data_summarised) %>%
+  mutate(year = as.factor(year))
+
+
+```
+
+```{r}
+#comparisons
+
+visits_delta <- sprintf("%+d",(data_all_lists %>% filter(year == 2025) %>% nrow() - data_all_lists %>% filter(year == 2024,date < Sys.Date()) %>% nrow()))
+
+records_delta <- sprintf("%+d",data_all %>% filter(year == 2025) %>% pull(n_records) %>% sum() - data_all %>% filter(year == 2024,date < Sys.Date()) %>% pull(n_records) %>% sum())
+
+long_delta <- sprintf("%+d",(data_all_lists %>% filter(year == 2025,n_records > 3) %>% nrow() - data_all_lists %>% filter(year == 2024,date < Sys.Date(),n_records>3) %>% nrow()))
+
+Unique_delta <- sprintf("%+d",(data_all_lists %>% filter(year == 2025) %>% pull(site_name) %>% unique() %>% length() - data_all_lists %>% filter(year == 2024,date < Sys.Date()) %>% pull(site_name) %>% unique() %>% length()))
+
+n_y0 <- data_all_lists %>% filter(year == 2024) %>% group_by(site_name) %>% summarise(n= sum(n_records)) %>% arrange(-n) %>% head(1) %>% pull(n)
+if(length(n_y0)==0){n_y0 <- 0}
+n_y1 <- data_all_lists %>% filter(year == 2025) %>% group_by(site_name) %>% summarise(n= sum(n_records)) %>% arrange(-n) %>% head(1) %>% pull(n)
+if(length(n_y1)==0){n_y1 <- 0}
+
+loc_rec_effort <- sprintf("%+d",n_y1 - n_y0)
+
+```
+
+## How much you've been recording
+
+In 2025, you've been out on **`r data_all_lists %>% filter(year == 2025) %>% nrow()`** visits across **`r data_all_lists %>% filter(year == 2025) %>% pull(site_name) %>% unique() %>% length()`** different 1km grid squares, which we will consider as 'sites'.  Of these visits, **`r data_all_lists %>% filter(year == 2025,n_records ==1 ) %>% nrow()`** were records of single species, **`r data_all_lists %>% filter(year == 2025,n_records %in% c(2,3) ) %>% nrow()`** were short lists of 2-3 species and **`r data_all_lists %>% filter(year == 2025,n_records >3 ) %>% nrow()`** were longer lists of 4 or more species. 
+
+From your recording activity you've generated **`r data_all %>% filter(year == 2025) %>% pull(n_records) %>% sum()`** records. **`r n_y1`** of these records were in your most visited site. Great work!
+
+Compared to **this time last year**:
+
+<div>
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse;">
+  <tr>
+    <td align="center">
+      <table cellpadding="0" cellspacing="0" border="4" style="border-collapse: collapse; border: 4px solid ">
+        <tr>
+          <td style="width: 150px; padding: 15px; font-family: Arial, sans-serif; font-size: 14px; text-align: center;"><h3>Visits</h3><h2 style="color: #92A41A">`r visits_delta`</h2></td>
+          <td style="width: 150px; padding: 15px; font-family: Arial, sans-serif; font-size: 14px;text-align: center;"><h3>Records</h3><h2 style="color: #92A41A">`r records_delta`</h2></td>
+        </tr>
+        <tr>
+          <td style="width: 150px; padding: 15px; font-family: Arial, sans-serif; font-size: 14px; text-align: center;"><h3>Sites</h3><h2 style="color: #92A41A">`r Unique_delta`</h2></td>
+          <td style="width: 150px; padding: 15px; font-family: Arial, sans-serif; font-size: 14px; text-align: center;"><h3>Longer lists </h3><h2 style="color: #92A41A">`r long_delta`</h2></td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  </div>
+</table>
+
+
+```{r, fig.height=7.5}
+#bar plot of n_records through time
+ggplot(data_all,aes(x = date,y = n_records,fill = year,colour = year))+
+  annotate("rect", xmin = as.Date("2025-01-01"), xmax = as.Date("2025-12-31"), ymin = 1.5, ymax = 3.5,alpha = .2,fill="grey")+
+  annotate("rect", xmin = as.Date("2025-01-01"), xmax = as.Date("2025-12-31"), ymin = 3.5, ymax = 30,alpha = .2,fill="#82ff66")+
+  scale_x_date(date_labels = "%b")+
+  geom_col(data = data_all_lists,width = 0.5,position="identity")+
+  geom_point(data = data_all_lists,size = 4)+
+  scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(min(x), (max(x) + 1) * 1.1)))))+
+  coord_cartesian(ylim= c(0,max(5,max(data_all$n_records))),xlim = c(as.Date("2025-01-01"),as.Date("2025-10-01")))+
+  #geom_hline(yintercept = 4,linetype=2) +
+  #lims(y = ) +
+  theme_minimal(base_size = 20)+
+  labs(x = "Date",y = "Number of records per site visit")+
+  guides(alpha = "none")+
+  scale_fill_manual(
+    values = c(
+      `2024` = "#404040",  # Blue
+      `2025` = "#92A41A"   # Green
+    )
+  )+
+  scale_colour_manual(
+    values = c(
+      `2024` = "#404040",  # Blue
+      `2025` = "#92A41A"   # Green
+    )
+  )+
+  facet_wrap(~year,ncol = 1)+ 
+  guides(fill="none",colour = "none")+
+  annotate("text", x = as.Date("2025-01-05"), y = 4.5, label = "Longer lists",hjust = 0)+
+  annotate("text", x = as.Date("2025-01-05"), y = 2.7, label = "Short lists",hjust = 0)+
+  annotate("text", x = as.Date("2025-01-05"), y = 1, label = "Single records",hjust = 0)
+  #labs(#title = "Your recording activity",
+  #  caption = "Only showing the most active recording season May-October")
+```
+
+This graph regards a site visit as a collection of records made on the same day to the same 1km OS grid square. 
+
+```{r, eval = F}
+#step plot
+#record count
+# ggplot(data_all,aes(x = date,y = cumulative,colour = year))+
+#   scale_x_date(date_labels = "%b", limits = c(as.Date("2025-01-01"),as.Date("2025-12-31")))+
+#   geom_step(position = "identity",linewidth = 1.3)+
+#   theme_minimal(base_size = 16)+
+#   labs(x = "Date",y = "Number of records")+
+#   guides(alpha = "none")+
+#   scale_colour_manual(
+#     values = c(
+#       `2024` = "cornflowerblue",  # Blue
+#       `2025` = "#92A41A"   # Green
+#     )
+#   )+
+#   theme(legend.position.inside= c(1,1))+ 
+#   guides(colour="none")+
+#   labs(title = "Your record count")
+```
+
+```{r, map}
+
+user_data_sf <- sf::st_as_sf(user_data,coords = c("longitude","latitude"),crs = 4326,remove = F) %>% filter(date >= as.Date("2024-01-01"))
+
+# Calculate bounding box from your data
+bbox <- sf::st_bbox(user_data_sf)
+
+# Calculate center of the bounding box
+center_lon <- mean(c(bbox["xmin"], bbox["xmax"]))
+center_lat <- mean(c(bbox["ymin"], bbox["ymax"]))
+
+# Get width and height
+width <- max(abs(bbox["xmax"] - bbox["xmin"]),0.2)
+height <- max(abs(bbox["ymax"] - bbox["ymin"]),0.2)
+
+# Determine max side to make it square
+half_side <- max(width, height) / 2
+
+# Create invisible square corner points
+square_bounds <- data.frame(
+LONGITUDE = c(center_lon - half_side*1.5, center_lon + half_side*1.5),
+LATITUDE = c(center_lat - half_side, center_lat + half_side)
+) %>% sf::st_as_sf(coords = c("LONGITUDE","LATITUDE"),crs = 4326,remove = F)
+
+
+
+ggplot() +
+ggspatial::annotation_map_tile(type="cartolight",progress = "none",zoomin=-1)+
+ggspatial::layer_spatial(square_bounds,size = 0,alpha =0) +  # <-- square padding
+ggspatial::layer_spatial(user_data_sf %>% filter(date >= as.Date("2024-01-01"),date < as.Date("2024-12-31")), colour = "#404040", size = 3)+
+ggspatial::layer_spatial(user_data_sf %>% filter(date >= as.Date("2025-01-01")), colour = "#92A41A", size = 3)+
+theme(
+axis.title.y = element_blank(),
+axis.text.y = element_blank(),
+axis.ticks.y = element_blank(),
+axis.title.x = element_blank(),
+axis.text.x = element_blank(),
+axis.ticks.x = element_blank()
+)
+
+```
+
+
+## How many species you've seen
+
+So far in 2025 you have recorded **`r data_all_species %>% filter(year == 2025) %>% nrow() -2`** species compared to the **`r data_all_species %>% filter(year == 2024) %>% nrow() -2`** species that you recorded in 2024. How many species will you record in 2025?
+
+```{r, fig.height=7.5}
+library(ggrepel)
+labels <- data_all_species %>%
+  filter(count>0,year == 2025,species!= "na") %>%
+  group_by(date,year) %>%
+  summarise(sp_label = paste(species_vernacular,collapse="\n " ),
+            count = max(count))
+
+#step plot
+#species count
+ggplot(data_all_species,aes(x = date,y = count,colour = year))+
+  scale_x_date(date_labels = "%b", )+
+  geom_step(position = "identity",linewidth = 1.3)+
+  #geom_point(data = data_all_species %>% filter(year == 2025) %>% tail(1),shape=17,size = 4) +
+  theme_minimal(base_size = 20)+
+  labs(x = "Date",y = "Number of species")+
+  guides(alpha = "none")+
+  scale_colour_manual(
+    values = c(
+      `2024` = "#404040",  # Blue
+      `2025` = "#92A41A"   # Green
+    )
+  )+
+  theme(legend.position.inside= c(0.1,.9),legend.title=element_blank())+ 
+  guides(colour=guide_legend(position = "inside"))+
+  labs(title = "Your species count")+
+  geom_label_repel(data = labels,aes(label = sp_label),colour = "#92A41A",nudge_x = -70,nudge_y =2,box.padding = 0.1,size = 3.5,fontface = 'italic',force = 5)+
+  coord_cartesian(xlim = c(as.Date("2025-01-01"),as.Date("2025-09-30")))
+
+```
+
+## A big thank you!
+
+Every single record you submit plays a vital role in understanding and protecting biodiversity.
+
+```{r, results = "asis"}
+
+if (target_group=="butterflies"){
+  cat("You can submit butterfly records using the [iRecord website](https://irecord.org.uk/), [iRecord app](https://irecord.org.uk/app) and the [iRecord butterflies app](https://butterfly-conservation.org/our-work/recording-and-monitoring/irecord-butterflies).")
+}
+
+```
+
