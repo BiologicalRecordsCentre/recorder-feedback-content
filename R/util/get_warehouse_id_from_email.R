@@ -2,6 +2,7 @@
 
 print("Loading R packages...")
 library(RJDBC)
+library(dplyr)
 config <- config::get()
 
 print("Loading JDBC driver...")
@@ -16,7 +17,7 @@ con <- dbConnect(
 )
 
 print("Loading subscribers...")
-user_data <- read.csv("data/users_no_key.csv")
+user_data <- read.csv("data/users_no_key.csv") %>% mutate(email = tolower(email))
 email_list <- paste(sprintf("'%s'", user_data$email), collapse = ", ") # Collapse into a single string with properly quoted values
 
 print("Building query...")
@@ -29,9 +30,9 @@ query <- gsub("FIND_REPLACE_EMAILS",paste0(email_list,collapse = ","),query)
 print("Querying database...")
 result <- dbGetQuery(con, query)
 
-library(dplyr)
 
-result <- result %>% rename("email"="email_address")
+
+result <- result %>% rename("email"="email_address") %>% mutate(email =tolower(email))
 complete_data <- left_join(user_data,result,by = "email")
 print(complete_data)
 
