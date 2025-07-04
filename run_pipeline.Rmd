@@ -50,9 +50,6 @@ if(config$gather_from_controller_app){
                                                     email_list_id = config$controller_app_list_id, 
                                                     api_token = config$controller_app_api_key) 
   write.csv(subscribers_df,config$participant_data_file,row.names = F)
-} else {
-  # simulate some users
-  source("R/gather/generate_test_users.R")
 }
 
 # get their records using this script which will save data to config$data_file
