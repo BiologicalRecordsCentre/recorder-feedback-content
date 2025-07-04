@@ -29,6 +29,14 @@ query <- gsub("FIND_REPLACE_EMAILS",paste0(email_list,collapse = ","),query)
 print("Querying database...")
 result <- dbGetQuery(con, query)
 
-print(result)
+library(dplyr)
+
+result <- result %>% rename("email"="email_address")
+complete_data <- left_join(user_data,result,by = "email")
+print(complete_data)
+
+
 
 print("Saving data...")
+write.table(complete_data,config$participant_data_file ,row.names = FALSE)
+print("Data saved")
