@@ -39,5 +39,5 @@ print(complete_data)
 
 
 print("Saving data...")
-write.table(complete_data,config$participant_data_file ,row.names = FALSE)
+write.csv(complete_data,config$participant_data_file ,row.names = FALSE)
 print("Data saved")

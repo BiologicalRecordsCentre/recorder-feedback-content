@@ -271,7 +271,7 @@ This graph regards a site visit as a collection of records made on the same day 
 #   labs(title = "Your record count")
 ```
 
-```{r, map}
+```{r map, eval=F}
 
 user_data_sf <- sf::st_as_sf(user_data,coords = c("longitude","latitude"),crs = 4326,remove = F) %>% filter(date >= as.Date("2024-01-01"))
 
