@@ -16,15 +16,15 @@ con <- dbConnect(
 )
 
 print("Loading subscribers...")
-subscribers_df <- read.csv(config$participant_data_file)
+user_data <- read.csv("data/users_no_key.csv")
+email_list <- paste(sprintf("'%s'", user_data$email), collapse = ", ") # Collapse into a single string with properly quoted values
 
 print("Building query...")
 query <- readLines("sql/warehouse_id_from_email_address.sql") |> paste(collapse = "\n")
 
-user_data <- read.csv("data/users_no_key.csv")
-email_list <- paste(sprintf("'%s'", user_data$email), collapse = ", ") # Collapse into a single string with properly quoted values
 
-query <- gsub("FIND_REPLACE_EMAILS",paste0(subscribers_df$user_id,collapse = ","),query)
+
+query <- gsub("FIND_REPLACE_EMAILS",paste0(email_list,collapse = ","),query)
 
 print("Querying database...")
 result <- dbGetQuery(con, query)
