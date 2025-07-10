@@ -38,69 +38,58 @@ The code in this repository is developed to programmatically generating effectiv
 
 This work inherits some ideas and concept from the MyDECIDE campaign delivered under the DECIDE project. The code and scripts from MyDECIDE are available here: https://github.com/simonrolph/DECIDE-WP3-newsletter/tree/main
 
-## Pipeline
+## Content Generation Pipeline
 
-The email generation process is managed by R package targets. The targets package is a Make-like pipeline tool for statistics and data science in R. The package skips costly runtime for tasks that are already up to date and orchestrates the necessary computation. The pipeline is described in `_targets.R`. Pipeline inputs and outputs
+The process from getting data to distributing content is defined in `run_pipeline.Rmd` (and a derived `.R` version for sourcing). Within this there is the content generation pipeline that automates slicing up the data for each user, doing per-user computations and generating the email content.
 
-**Inputs**
+The email generation process is managed by R package targets. The targets package is a Make-like pipeline tool for statistics and data science in R. The package skips costly runtime for tasks that are already up to date and orchestrates the necessary computation. The pipeline is described in `_targets.R`.
 
- * Raw data (`.csv`)
- * R markdown template (`.Rmd`)
- * HTML template (`.html`)
- * Computation script - background (`.R`)
- * Computation script - focal (`.R`)
- 
-**Intermediates**
-
- * Focal data
- * background data
- * Computed objects - background
- * Computed objects - focal
-
-**Outputs**
-
- * Recorder feedback items (`.html`)
- * Metadata table (`.csv`)
- 
-All the R code for making the pipeline work is located in the `R` folder, you shouldn't need to edit any of these files.
-
-Below is a schematic diagram providing an overview of the email generation process. Input data is loaded from an external source (e.g. an Indicia database). For each person/place/project the data is split into the focal data (relating to the person, place or project you which to deliver targeted feedback to) and the background data (all other data). Computations are then applied to these datasets, this might be to calculate summary statistics such as the number of records made in a certain period. The data and the computations are fed into an Rmarkdown document which contains code which you have developed to generate effective digital engagements. A HTML template is also combined here to specify any generic elements such as formatting, header/footers, and logos.
+Input data is loaded from an external source (e.g. an Indicia database). For each person/place/project the data is split into the focal data (relating to the person, place or project you which to deliver targeted feedback to) and the background data (all other data). Computations are then applied to these datasets, this might be to calculate summary statistics such as the number of records made in a certain period. The data and the computations are fed into an Rmarkdown document which contains code which you have developed to generate effective digital engagements. A HTML template is also combined here to specify any generic elements such as formatting, header/footers, and logos.
 
 ![](img/recorder_feedback_overview.drawio.svg)
 
 ## Gathering Data
 
-The input data is made available in the `/data` folder. It must be in a certain format in order to work correctly. During the pipeline the data is split into the `user_data` which only includes the species records of the target user and the `bg_data` (background) which is the data for everyone.
+All data for users or their records are stored in the `/data` folder. The contents of this folder are ignored by git because this is likely to contain personal data such as emails. There are two tables as `.csv` files representing the users and their records. These tables are both contain a `user_id` column which can be used to match users to their records.
+
+### User data
+
+This contains data about the users for which you are creating personalised feedback. There are three key columns:
+
+ - `user_id` - This is a unique identifier for a user. This could be their ID from a biological recording website.
+ - `name` - This is the name of the user that they are addressed by in the personalised feedback
+ - `email` - This is their email address, if you are using email as a dispatch method
+ 
+You can also add any other columns you wish and this information will be passed to the parametised R markdown template through an R object `params$extra_params`. This is useful if you wish to have different feedback content for different recorders. FOr example, a column of `taxon` which could have the values of `butterfly` or `dragonfly` could be used in if/else logic statements (e.g. `if(params$extra_params$taxon=="butterfly){print("Butterfly!")}`) within the R markdown template to show different content to different users. This could also be used for splitting a group into A/B testing. Generating the data for these other columns is not part of the provided pipeline so you will need to manipulate this csv yourself. Typically, using writing a script and saving it in `R/util` (utility scripts).
+
+#### Using the controller app
+
+If you are using the controller app to host your user data you will need to provide the API endpoints and authentication details in `config.yml` (see configuration section below). In `run_pipeline.R` it will call the API and download the user data.
+
+### Records data
+
+This data contains the biodiversity data. The only column you must have is the `user_id` column, the rest of the columns are not prescriptive and up to your use case. For a typical biological recording user case you will have columns describing who, what was recorded, where, when. Some basic headings (and are used in the example below) are: `latitude`, `longitude`, `species`, `date`, `user_id` (required). Some recommended extra headings include: `species_vernacular` (common name), `species_group` (is it a frog, a bird etc.).
+
+During the pipeline the data is split into the `user_data` which only includes the species records of the target user and the `bg_data` (background) which is the data for everyone. The user data and background data are passed to the R markdown template as `params$user_data` and `params$bg_data`.
 
 ## Generating content
 
-Content generation for the email feedback is handled using **parameterised R Markdown** and a flexible templating system. This enables the creation of personalised, data-driven emails in HTML format for each recipient.
+### Computations
+
+Computationally expensive or reusable logic (e.g. aggregations, statistics, plots) should **not** be placed inside the `.Rmd` file. Instead, define these in separate R scripts located in the `computations/` folder. Each file defines a function called `compute_objects()` which can take the `user_data` or `bg_data` as a function argument.
+
+Which computation the pipeline should carry out is defined in `config.yml`. This computation can be applied to both user and background data, or different computations for each. These scripts return a list of R objects (tables, plots, metrics) that are passed to the R Markdown template through `params$bg_computed_objects` and `params$user_computed_objects`. 
 
 ### Rendering with R Markdown
 
-We use [R Markdown](https://rmarkdown.rstudio.com/) to render the emails. This format allows for combining plain markdown with embedded R code chunks, making it ideal for integrating visualisations, text, and summaries dynamically.
-
-- The `.Rmd` template receives inputs via parameters for:
-  - `user_data` – records specific to the target recipient
-  - `bg_data` – background records (everyone else)
-  - computed objects derived from both datasets
-
-- The rendered output is a **self-contained HTML file**, ready for email delivery (no external image dependencies).
-
-### Computation Scripts
-
-Computationally expensive or reusable logic (e.g. aggregations, statistics, plots) should **not** be placed inside the `.Rmd` file. Instead, define these in separate R scripts:
-
-- Located in the `computations/` folder
-- Defined for both:
-  - `user_data` (focal computation)
-  - `bg_data` (background computation)
-- These scripts return pre-processed R objects (tables, plots, metrics) that are injected into the R Markdown template
-
-### Templates
+We use [R Markdown](https://rmarkdown.rstudio.com/) to render the emails. Pandoc will need to be installed and the path set in `config.yml`. This format allows for combining plain markdown with embedded R code chunks, making it ideal for integrating visualisations, text, and summaries dynamically. The R markdown template to use is defined in `config.yml`. The `.Rmd` template receives inputs via parameters defined in the yml at the top of the template. The rendered output is a **self-contained HTML file**, ready for email delivery (no external image dependencies).
 
 - **R Markdown Template (`.Rmd`)**: Customisable to include user-specific content, visual summaries, and feedback messages.
-- **HTML Layout Template (`.html`)**: Provides structure and styling (e.g., branding, headers/footers, colors).
+- **HTML Layout Template (`.html`)**: Provides structure and styling (e.g., branding, headers/footers, colors). Content that will be consistent across every email, it makes sense to put it here to save any R computation time.
+
+Building your R markown is the interesting bit. The parametised markdown + targets pipeline approach approach means you have the data from users/background, the user/background computed objects, and the extra params from the extra columns in the users table. You can use any R package here so long as you have it installed. We recommend using renv for package management. The development loop can be slow if you have to run the whole content generation pipeline, do what you can do is run the pipeline which has a target for the user parameters. Then you can do `params <- targets::tar_read(user_params__[USER_ID])` which will then you can run the chunks in the markdown interactively using this `params` object you have loaded. To see your targets look in `_targets/objects`.
+
+The basic HTML template provided is lifted from R package {blastula} and provides formatting such as a container and headers/footers. If you want to change the look and feel of your feedback items you should copy the basic template and rename your copy to `custom_template.html`. You can edit the look and feel of the content by editing the css contained within the `<style>` tags in the html. You then need to edit `config.yml` to ensure that your new template is being used in your pipeline.
 
 ### Output Location
 
@@ -167,58 +156,6 @@ in `.Renviron` you need to provide any secrets/keys needed by the script define 
 | `mail_test_recipient`| Optional hardcoded recipient for testing                      |
 
 
-### Scheduling jobs
-
-You can automate the execution of your `run_pipeline.R` script by setting up a **cron job** that runs your Bash script daily.
-
-#### 1. Make Sure the Bash Script Is Executable
-
-Ensure your Bash script (e.g. `run_pipeline.sh`) has execution permissions:
-
-```bash
-chmod +x entrypoint.sh
-```
-
-#### 2️. Edit Your Crontab
-
-To add a scheduled task, open your crontab:
-
-```bash
-crontab -e
-```
-
-This opens the crontab file in your default text editor.
-
-#### 3.  Add a Cron Job Entry
-
-To run the pipeline **once daily at 7:00 AM**, add the following line to the crontab:
-
-```
-0 7 * * * /path/to/entrypoint.sh >> /path/to/logs/pipeline.log 2>&1
-```
-
-Explanation:
-
-- `0 2 * * *` → Run at 2:00 AM every day
-- `/path/to/your/script/run_pipeline.sh` → Full path to your Bash script
-- `>> pipeline.log 2>&1` → Appends both standard output and errors to a log file
-
-> **Tip:** Always use absolute paths in cron jobs—cron runs in a minimal environment and won’t know about your user-specific `PATH`.
-
----
-
-### 🧪 Test Your Script First
-
-You can manually run the script to confirm it works:
-
-```
-bash run_pipeline.sh
-```
-
----
-
-Let me know if you want a version that runs multiple times a day, or only on weekdays!
-
 ## Getting started
 
 Provided in this code is a a minimal example to show how it works. This can then be used as a starting point for developing your own personalised feedback. 
@@ -278,7 +215,61 @@ head(read.csv("data/simulated_participants.csv"))
 head(read.csv("data/simulated_data_raw.csv"))
 ```
 
-### Get participant data from controller app
+### Generating feedback items
+
+Now we've generated the test (or real) data we can run the pipeline but before we do let's have a look at the other code required to make the pipeline work. 
+
+Firstly, the config file:
+
+`config.yml`
+
+```{r,echo=F,warning=F}
+cat(readLines("../example_config.yml"), sep = '\n')
+```
+
+This file specifies which R/Rmd/HTML files are used in the email generation process. The config file is implemented using R package {config}. The values specified in the config file are loaded in the R code using config. Learn about the package here https://rstudio.github.io/config/articles/introduction.html
+
+ * `participant_data_file`: The file path for the inut data with the list of participants
+ * `data_file`: The file path for the the input data containing biological records
+ * `computation_script_bg`: The file path for the script for computations for the background data
+ * `computation_script_user`: The file path for the script for computations for the focal data (this could be the same script as computation_script_bg)
+ * `default_template_file`: The file path for the R markdown file containing the EDE format
+ * `template_html_file`: The file path for the HTML template containing formatting/header/footer etc.
+
+The computation scripts are located in the `computations` folder. Each script is an R function (which must be called `compute_objects`) which takes either the focal or background data as its argument and returns a named list of computed objects. These objects can then be used in the R markdown file. For example here is the example computations provided in `computations_example.R`. 
+
+```{r,echo=F,warning=F}
+cat(readLines("../computations/computations_example.R"), sep = '\n')
+```
+
+If you don't need any computations then you can set `computation_script_bg: computations/computations_none.R` which provides a dummy function:
+
+```{r,echo=F,warning=F}
+cat(readLines("../computations/computations_none.R"), sep = '\n')
+```
+
+The data (focal and background) and the computed objects (focal and background) are all used in the rendering the final HTML feedback item. Please take a look at the example template provided in [`templates/example.Rmd`](https://github.com/BiologicalRecordsCentre/recorder-feedback/blob/main/templates/example.Rmd). Essentially you can us any R code you might use in analyses or data visualisation can be used here. However, please be aware that slower more complex R code will increase the time it takes to generate feedback. Some key principles:
+
+ * The computed objects are passed to the R markdown as parameters which you can access using `params$bg_computed_objects` or `params$user_computed_objects`. Note that these are the named list objects so if within this you defined it as `list(number_of_records=323)` then in order to access this in the R markdown you'd use `params$bg_computed_objects$number_of_records`. 
+ * You can use inline R code: https://rmarkdown.rstudio.com/lesson-4.html
+
+Finally, now we've had a look at all the components that are used in the pipeline, you can trigger the pipeline using `targets::tar_make()` or `source(run_pipeline.R`). Pipeline can be called with a command line prompt. This is useful if you want to trigger the pipeline run as part of a schedule (eg a CRON job).
+
+```
+Rscript run_pipeline.R
+```
+
+### View generated emails
+
+Once the targets pipeline has completed, you can view the generated email renders. Execute the following command in R or RStudio:
+
+```
+source("R/view_renders.R")
+```
+
+## Details
+
+### Controller app
 
 Here we provide an example script and functions for getting data from a controller app, see: https://github.com/BiologicalRecordsCentre/recorder-feedback-controller for more details.
 
@@ -332,7 +323,7 @@ write.csv(subscribers_df, config$participant_data_file, row.names = FALSE)
 
 The function returns a `data.frame` containing the list of subscribers from the specified email list saved in the `participant_data_file`
 
-### Get Records data from an Indicia warehouse
+### Indicia warehouse
 
 You’ll need the following:
 
@@ -343,66 +334,7 @@ You’ll need the following:
  * User Warehouse ID: The unique identifier for the user whose records you want to retrieve (contained in data downloaded from controller app)
  * Number of Records: The number of records you want to retrieve for that user (maximum is 10,000)
 
-
-### Generating feedback items
-
-Now we've generated the test (or real) data we can run the pipeline but before we do let's have a look at the other code required to make the pipeline work. 
-
-Firstly, the config file:
-
-`config.yml`
-
-```{r,echo=F,warning=F}
-cat(readLines("../example_config.yml"), sep = '\n')
-```
-
-This file specifies which R/Rmd/HTML files are used in the email generation process. The config file is implemented using R package {config}. The values specified in the config file are loaded in the R code using config. Learn about the package here https://rstudio.github.io/config/articles/introduction.html
-
- * `participant_data_file`: The file path for the inut data with the list of participants
- * `data_file`: The file path for the the input data containing biological records
- * `computation_script_bg`: The file path for the script for computations for the background data
- * `computation_script_user`: The file path for the script for computations for the focal data (this could be the same script as computation_script_bg)
- * `default_template_file`: The file path for the R markdown file containing the EDE format
- * `template_html_file`: The file path for the HTML template containing formatting/header/footer etc.
-
-The computation scripts are located in the `computations` folder. Each script is an R function (which must be called `compute_objects`) which takes either the focal or background data as its argument and returns a named list of computed objects. These objects can then be used in the R markdown file. For example here is the example computations provided in `computations_example.R`. 
-
-```{r,echo=F,warning=F}
-cat(readLines("../computations/computations_example.R"), sep = '\n')
-```
-
-If you don't need any computations then you can set `computation_script_bg: computations/computations_none.R` which provides a dummy function:
-
-```{r,echo=F,warning=F}
-cat(readLines("../computations/computations_none.R"), sep = '\n')
-```
-
-The data (focal and background) and the computed objects (focal and background) are all used in the rendering the final HTML feedback item. Please take a look at the example template provided in [`templates/example.Rmd`](https://github.com/BiologicalRecordsCentre/recorder-feedback/blob/main/templates/example.Rmd). Essentially you can us any R code you might use in analyses or data visualisation can be used here. However, please be aware that slower more complex R code will increase the time it takes to generate feedback. Some key principles:
-
- * The computed objects are passed to the R markdown as parameters which you can access using `params$bg_computed_objects` or `params$user_computed_objects`. Note that these are the named list objects so if within this you defined it as `list(number_of_records=323)` then in order to access this in the R markdown you'd use `params$bg_computed_objects$number_of_records`. 
- * You can use inline R code: https://rmarkdown.rstudio.com/lesson-4.html
-
-The HTML template [`templates_html/basic_templatehtml`](https://github.com/BiologicalRecordsCentre/recorder-feedback/blob/main/templates_html/basic_template.html) contains the formatting for the email. You only need to edit this if you whish to change the look and feel of the emails.
-
-Finally, now we've had a look at all the components that are used in the pipeline, you can trigger the pipeline using `targets::tar_make()` or `source(run_pipeline.R`). Pipeline can be called with a command line prompt. This is useful if you want to trigger the pipeline run as part of a schedule (eg a CRON job).
-
-```
-Rscript run_pipeline.R
-```
-
-### View generated emails
-
-Once the targets pipeline has completed, you can view the generated email renders. Execute the following command in R or RStudio:
-
-```
-source("R/view_renders.R")
-```
-
-## Development details
-
-Now that you have the project set up and have generated test feedback, you can customize the email template and scripts to generate personalized feedback items according to your specific requirements. Edit the template (example.Rmd) and other scripts as needed to tailor the feedback content and format. By following the following steps, you can quickly set up the project environment and start generating informative feedback for biological recorders.
-
-### Input data
+#### Input data
 
 Input data (the full dataset) must be provided as a csv (comma separated values). The columns within the data are up to you but for consistency we recommend using Darwin Core terms: https://dwc.tdwg.org/terms/#occurrence & https://dwc.tdwg.org/terms/#location
 
@@ -410,19 +342,7 @@ The columns you specify here (or have been specified by whatever data source you
 
 In the records data (as specified in config as `data_file`) and the participant data (as specified in config as `participant_data_file`) there must be a shared `user_id` column which is used to link the users to their records. For example data from Indicia systems this might be the warehouse ID.
 
-### Computating objects
-
-Presenting simply raw data limits the ability to produce meaningful feedback. Therefore as part of the feedback generation pipeline we compute objects. We define these computations as R functions which take the input data as its argument. The computation functions return a named list of objects which can then be referred to in the R markdown file in order to show to the user. You can define different computation functions for the background computations and the focal computations, or use the same computation file for each. 
-
-### The R Markdown
-
-The R markdown file is where you will spend the majority of you time developing the feedback you wish to send to recorders. R markdown was chosen as it provides all the facilities of R. If you need to use additional R packages please ensure that you update your `renv.lock` file to capture this.
-
-### The HTML template
-
-The basic HTML template provided is lifted from R package {blastula} and provides formatting such as a container and headers/footers. If you want to change the look and feel of your feedback items you should copy the basic template and rename your copy to `custom_template.html`. You can edit the look and feel of the content by editing the css contained within the `<style>` tags in the html. You then need to edit `config.yml` to ensure that your new template is being used in your pipeline.
-
-## Deployment
+### Deployment
 
 A full pipeline is included in `run_pipeline.Rmd` (also `run_pipeline.R`). This code represents an **R Markdown script** for a feedback delivery pipeline, designed to automate the gathering, processing, and emailing of feedback to users. Here’s a breakdown of its structure and purpose:
 
@@ -454,7 +374,7 @@ A full pipeline is included in `run_pipeline.Rmd` (also `run_pipeline.R`). This 
 - Sends feedback emails
 
 
-#### Automation
+### Automation
 
 If you want to automate the pipeline you can use `crontab`. For this we use the `entrypoint.sh` script as the things that we are triggering, which then runs `run_pipeline.R`.
 

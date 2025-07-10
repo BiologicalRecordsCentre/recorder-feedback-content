@@ -59,7 +59,9 @@ mapping <- tar_map(
                                bg_data = raw_data,
                                bg_computed_objects = bg_computed_objects,
                                content_key = content_key,
-                               config = config
+                               config = config,
+                               extra_params = users_target %>% filter(user_id == user_id_) %>% select(-name,-email)
+                               
   )),
   
   #render the content

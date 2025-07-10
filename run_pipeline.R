@@ -1,26 +1,17 @@
-#Sys.setenv(R_CONFIG_ACTIVE = "default") # running locally for development
-#Sys.setenv(R_CONFIG_ACTIVE = "rsconnect") #running on posit connect
+# #run this line
+# knitr::purl(input = "run_pipeline.Rmd", output = "run_pipeline.R",documentation = 0)
 
 #PREP
 #generating batch_id
 batch_id <- paste0(Sys.Date(),"-",paste(sample(letters,10),collapse = ""))
 
-#posit connect automatically sets up the renv environment, but if not using rsconnect then you need to manually initiate the renv environment
-# if(Sys.getenv("R_CONFIG_ACTIVE") != "rsconnect"){ 
-#   source("renv/activate.R") #activate the renv environment
-#   renv::restore() #restore packages
-# }
-
-#packages
+#load packages
 library(httr)
 library(jsonlite)
 library(curl)
 
 #load configuration from config.yml using config package
 config <- config::get()
-
-#export the R code from here as a R file
-#knitr::purl(input = "run_pipeline.Rmd", output = "run_pipeline.R",documentation = 0)
 
 # Get users
 if(config$gather_from_controller_app){
@@ -33,6 +24,7 @@ if(config$gather_from_controller_app){
   write.csv(subscribers_df,config$participant_data_file,row.names = F)
 }
 
+
 # get their records using this script which will save data to config$data_file
 source(config$gather_bio_script)
 
@@ -43,15 +35,15 @@ if(difftime(file.info(config$data_file)$mtime,Sys.time(),units = "secs") < 30){
   stop("Biodiversity data file has not been updated, check for issue in gather script")
 }
 
-
 # GENERATE
 #run the pipeline
 Sys.setenv(BATCH_ID = batch_id) # Set an environment variable in R for the batch code
 targets::tar_make() # run the pipeline
 Sys.unsetenv("BATCH_ID") #and unset the variable
 
-
 #SEND
+
+#maintain a dataframe with the email and any errors that arise when sending
 status_log <- data.frame(
   user_id = character(),
   email = character(),
