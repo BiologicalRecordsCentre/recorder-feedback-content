@@ -35,13 +35,13 @@ library(ggspatial)
 #bg / user_computed_objects: none
 
 target_group <- params$extra_params$taxon # "butterflies" or "dragonflies"
-treatment_group <- "self" #"self" or "background"  or "none"
+treatment_group <- params$extra_params$treatment #"self" or "background"  or "none"
 
 
 ```
 
 ```{r, eval =FALSE}
-params <- targets::tar_read(user_params__301091)
+params <- targets::tar_read(user_params__22727)
 ```
 
 <p align="center">
@@ -103,14 +103,14 @@ y1_data_lists <- y1_data %>%
   group_by(date,site_name) %>%
   summarise(n_records = n(),
             n_species = length(unique(species))) %>%
-  mutate(list_type = if_else(n_records == 1,"Single record",if_else(n_records <4,"Short list (2-3 records)","Long list (4+ records)"))) %>%
+  mutate(list_type = if_else(n_species == 1,"Single record",if_else(n_species <4,"Shorter list (2-3 records)","Long list (4+ records)"))) %>%
   mutate(year = 2025,date = as.Date(date))
 
 y0_data_lists <- y0_data %>%
   group_by(date,site_name) %>%
   summarise(n_records = n(),
             n_species = length(unique(species))) %>%
-  mutate(list_type = if_else(n_records == 1,"Single record",if_else(n_records <4,"Short list (2-3 records)","Long list (4+ records)"))) %>%
+  mutate(list_type = if_else(n_species == 1,"Single record",if_else(n_species <4,"Shorter list (2-3 records)","Long list (4+ records)"))) %>%
   mutate(year = 2024)%>%
   mutate(date = as.Date(date) %m+% years(1))
 data_all_lists <- rbind(y1_data_lists, y0_data_lists) %>%
@@ -178,7 +178,7 @@ if(treatment_group == "self"){
 
   records_delta <- sprintf("%+d",data_all %>% filter(year == 2025) %>% pull(n_records) %>% sum() - data_all %>% filter(year == 2024,date < Sys.Date()) %>% pull(n_records) %>% sum())
   
-  long_delta <- sprintf("%+d",(data_all_lists %>% filter(year == 2025,n_records > 3) %>% nrow() - data_all_lists %>% filter(year == 2024,date < Sys.Date(),n_records>3) %>% nrow()))
+  long_delta <- sprintf("%+d",(data_all_lists %>% filter(year == 2025,n_species > 3) %>% nrow() - data_all_lists %>% filter(year == 2024,date < Sys.Date(),n_species>3) %>% nrow()))
   
   unique_delta <- sprintf("%+d",(data_all_lists %>% filter(year == 2025) %>% pull(site_name) %>% unique() %>% length() - data_all_lists %>% filter(year == 2024,date < Sys.Date()) %>% pull(site_name) %>% unique() %>% length()))
   
@@ -189,17 +189,17 @@ if(treatment_group == "self"){
   
   visits_delta <- sprintf("%+d",data_all_lists %>% filter(year == 2025) %>% nrow() - key_stats$avg_visits)
   records_delta <- sprintf("%+d",data_all %>% filter(year == 2025) %>% pull(n_records) %>% sum() - key_stats$avg_records)
-  long_delta <- sprintf("%+d",data_all_lists %>% filter(year == 2025,n_records > 3) %>% nrow() - key_stats$avg_longer_lists)
+  long_delta <- sprintf("%+d",data_all_lists %>% filter(year == 2025,n_species > 3) %>% nrow() - key_stats$avg_longer_lists)
   unique_delta <- sprintf("%+d",data_all_lists %>% filter(year == 2025) %>% pull(site_name) %>% unique() %>% length() - key_stats$avg_sites)
   
-  message1 <- paste0("Compared to the average activity of **other recorders of ",target_group,"**:")
+  message1 <- paste0("Compared to the typical **recorder of ",target_group,"**:")
 } else if (treatment_group == "none") {
   key_stats <- params$bg_computed_objects$key_stats %>%
     filter(species_group==target_group)
   
   visits_delta <- data_all_lists %>% filter(year == 2025) %>% nrow()
   records_delta <- data_all %>% filter(year == 2025) %>% pull(n_records) %>% sum()
-  long_delta <- data_all_lists %>% filter(year == 2025,n_records > 3) %>% nrow()
+  long_delta <- data_all_lists %>% filter(year == 2025,n_species > 3) %>% nrow()
   unique_delta <- data_all_lists %>% filter(year == 2025) %>% pull(site_name) %>% unique() %>% length()
   
   message1 <- paste0("So far in **2025**:")
@@ -218,9 +218,9 @@ loc_rec_effort <- sprintf("%+d",n_y1 - n_y0)
 
 ## How much you've been recording
 
-In 2025, you've been out on **`r data_all_lists %>% filter(year == 2025) %>% nrow()`** visits across **`r data_all_lists %>% filter(year == 2025) %>% pull(site_name) %>% unique() %>% length()`** different 1km grid squares, which we will consider as 'sites'.  Of these visits, **`r data_all_lists %>% filter(year == 2025,n_records ==1 ) %>% nrow()`** were records of single species, **`r data_all_lists %>% filter(year == 2025,n_species %in% c(2,3) ) %>% nrow()`** were short lists of 2-3 species and **`r data_all_lists %>% filter(year == 2025,n_species >3 ) %>% nrow()`** were longer lists of 4 or more species. 
+In 2025, you've been out on **`r data_all_lists %>% filter(year == 2025) %>% nrow()`** visits across **`r data_all_lists %>% filter(year == 2025) %>% pull(site_name) %>% unique() %>% length()`** different 1km grid squares, which we will consider as 'sites'.  Of these visits, **`r data_all_lists %>% filter(year == 2025,n_records ==1 ) %>% nrow()`** were records of single species, **`r data_all_lists %>% filter(year == 2025,n_species %in% c(2,3) ) %>% nrow()`** were shorterlists of 2-3 species and **`r data_all_lists %>% filter(year == 2025,n_species >3 ) %>% nrow()`** were longer lists of 4 or more species. 
 
-From your recording activity you've generated **`r data_all %>% filter(year == 2025) %>% pull(n_records) %>% sum()`** records. **`r n_y1`** of these records were in your most visited site. Great work!
+From your recording activity you've generated **`r data_all %>% filter(year == 2025) %>% pull(n_records) %>% sum()`** records. **`r n_y1`** of these records were in your most visited site.
 
 `r message1`
 
@@ -235,7 +235,7 @@ From your recording activity you've generated **`r data_all %>% filter(year == 2
         </tr>
         <tr>
           <td style="width: 150px; padding: 15px; font-family: Arial, sans-serif; font-size: 14px; text-align: center;"><h3>Sites</h3><h2 style="color: #92A41A">`r unique_delta`</h2></td>
-          <td style="width: 150px; padding: 15px; font-family: Arial, sans-serif; font-size: 14px; text-align: center;"><h3>Longer lists </h3><h2 style="color: #92A41A">`r long_delta`</h2></td>
+          <td style="width: 150px; padding: 15px; font-family: Arial, sans-serif; font-size: 14px; text-align: center;"><h3>Longer lists<span style="color: #FC6DAB">*</span> </h3><h2 style="color: #FC6DAB">`r long_delta`</h2></td>
         </tr>
       </table>
     </td>
@@ -243,10 +243,12 @@ From your recording activity you've generated **`r data_all %>% filter(year == 2
   </div>
 </table>
 
+<span style="color: #FC6DAB">\*</span>Recording all species of `r target_group` that you observe on a visit helps build our understanding of the area's biodiversity. This may result in a longer list but this dependant on other factors such as time of year, location and weather. 
+
 
 ```{r, fig.height=7.5}
 lollipop_plot_data <- data_all_lists
-false_labels <- c("2024" = "2024","2025" = "2025")
+false_labels <- c("2025" = "This year (2025)","2024" = " Last year (2024)")
 
 if(treatment_group=="background"){
   lollipop_plot_data <- lollipop_plot_data %>% filter(year ==2025)
@@ -259,30 +261,39 @@ if(treatment_group=="background"){
   lollipop_plot_data <- lollipop_plot_data %>% bind_rows(lollipop_plot_data_bg)
   
   false_labels <- c(
-                    "2024" = "Other recorders",
-                    "2025" = "Your recording"
-                    )
+    "2025" = "Your recording in 2025",
+    "2024" = "Other recorders in 2025"
+    )
   
 }
 
-if(treatment_group=="background"){
+if(treatment_group=="none"){
   lollipop_plot_data <- lollipop_plot_data %>% filter(year ==2025)
 }
 
+if(treatment_group=="self"){
+  lollipop_plot_data <- lollipop_plot_data %>% filter(year ==2025) %>% bind_rows(data.frame(list_type = c("Single species","Longer list","Shorter list"),date = as.Date("2020-01-01"),year = "2024",n_species=0))
+}
+
+lollipop_plot_data <- lollipop_plot_data %>%  mutate(year = factor(as.character(year), levels = c("2025","2024"))) %>% ungroup()
+
+```
+
+```{r, eval=F, fig.height=7.5}
 
 #bar plot of n_records through time
-ggplot(data_all,aes(x = date,y = n_records,fill = year,colour = year))+
+ggplot(lollipop_plot_data,aes(x = date,y = n_species,fill = year,colour = year))+
   annotate("rect", xmin = as.Date("2025-01-01"), xmax = as.Date("2025-12-31"), ymin = 1.5, ymax = 3.5,alpha = .2,fill="grey")+
   annotate("rect", xmin = as.Date("2025-01-01"), xmax = as.Date("2025-12-31"), ymin = 3.5, ymax = 30,alpha = .2,fill="#82ff66")+
   scale_x_date(date_labels = "%b")+
-  #geom_col(data = lollipop_plot_data  %>% filter(year == 2025),width = 0.5,position="identity",)+
+  geom_col(data = lollipop_plot_data  %>% filter(year == 2025),width = 0.2,position="identity")+
   geom_point(data = lollipop_plot_data,size = 4)+
   scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(min(x), (max(x) + 1) * 1.1)))))+
-  coord_cartesian(ylim= c(0,max(5,max(data_all$n_records))),xlim = c(as.Date("2025-01-01"),as.Date("2025-10-01")))+
+  coord_cartesian(ylim= c(0,max(5,max(lollipop_plot_data$n_species))),xlim = c(as.Date("2025-01-01"),as.Date("2025-10-01")))+
   #geom_hline(yintercept = 4,linetype=2) +
   #lims(y = ) +
   theme_minimal(base_size = 20)+
-  labs(x = "Date",y = "Number of records per site visit")+
+  labs(x = "Date",y = "Number of species per visit")+
   guides(alpha = "none")+
   scale_fill_manual(
     values = c(
@@ -296,14 +307,45 @@ ggplot(data_all,aes(x = date,y = n_records,fill = year,colour = year))+
       `2025` = "#92A41A"   # Green
     )
   )+
-  facet_wrap(~year,ncol = 1,labeller = as_labeller(false_labels))+ 
+  facet_wrap(~as.factor(year),ncol = 1,labeller = as_labeller(false_labels),drop=FALSE)+ 
   guides(fill="none",colour = "none")+
-  annotate("text", x = as.Date("2025-01-05"), y = 4.5, label = "Longer lists",hjust = 0)+
-  annotate("text", x = as.Date("2025-01-05"), y = 2.7, label = "Short lists",hjust = 0)+
-  annotate("text", x = as.Date("2025-01-05"), y = 1, label = "Single records",hjust = 0)+
-  geom_vline(xintercept = as.Date(Sys.Date()),alpha = 0.5)
+  annotate("text", x = as.Date("2025-01-05"), y = 4.5, label = "Longer lists",hjust = 0,alpha = 0.5)+
+  annotate("text", x = as.Date("2025-01-05"), y = 2.7, label = "shorterlists",hjust = 0,alpha = 0.5)+
+  annotate("text", x = as.Date("2025-01-05"), y = 1, label = "Single records",hjust = 0,alpha = 0.5)+
+  {if(treatment_group!="none")geom_point(data = data.frame(date = as.Date("2025-10-31"),n_species = 0,year = c("2024","2025")),alpha = 0)}+ #invisible points to ensure that we get both 2024 and2025
+  theme(panel.grid.minor.y = element_blank(),panel.grid.major.y = element_blank())
+  #geom_vline(xintercept = as.Date(Sys.Date()),alpha = 0.5)
   #labs(#title = "Your recording activity",
   #  caption = "Only showing the most active recording season May-October")
+
+```
+
+```{r, fig.height=7.5}
+
+lollipop_plot_data %>%
+  mutate(list_type = if_else(n_species==1,"Single species",if_else(n_species>3,"Longer list","Shorter list"))) %>%
+  bind_rows(data.frame(list_type = c("Single species","Longer list","Shorter list"),date = as.Date("2020-01-01"),year = "2025")) %>%
+  mutate(year = factor(as.character(year), levels = c("2025","2024"))) %>%
+  ggplot(aes(x= date,group = list_type,fill = list_type))+
+  geom_histogram(binwidth = 7,position = "stack")+
+  {if(treatment_group!="background")facet_wrap(~as.factor(year),ncol = 1,labeller = as_labeller(false_labels))}+
+  {if(treatment_group=="background")facet_wrap(~as.factor(year),ncol = 1,labeller = as_labeller(false_labels),scale="free_y")}+
+  theme_minimal(base_size = 20)+
+  labs(x= "Date",y = "Number of visits per week")+
+  scale_fill_manual(
+    values = c(
+      "Single species" = "lightgrey",
+      "Shorter list" = "#9C8F81",
+      "Longer list" = "#FC6DAB"
+      
+    )
+  )+
+  theme(legend.title=element_blank(),legend.position = "bottom",legend.text=element_text(size=14))+
+  scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(min(x), (max(x) + 1) * 1.1)))))+
+  scale_x_date(date_labels = "%b")+
+  coord_cartesian(xlim = c(as.Date("2025-01-01"),as.Date("2025-10-01")))
+
+
 ```
 
 This graph regards a site visit as a collection of records made on the same day to the same 1km OS grid square. 
@@ -386,7 +428,7 @@ if(treatment_group == "self"){
 
 `r message2`
 
-```{r, fig.height=7.5}
+```{r,fig.height=7.5}
 library(ggrepel)
 labels <- data_all_species %>%
   filter(count>0,year == 2025,species!= "na") %>%
@@ -399,7 +441,8 @@ step_plot_data <- data_all_species
 if(treatment_group == "background"){
   step_plot_data <- step_plot_data %>% filter(year == 2025)
   
-  avg_label <- data.frame(date = as.Date(Sys.Date()),count = key_stats$avg_species_count,sp_label = "Average number of species\nseen by other recorders",year = "2024")
+  avg_label <- data.frame(date = as.Date(Sys.Date()),count = key_stats$avg_species_count,sp_label = "Typical recorder's\n species count",year = "2024")
+  first_label <- data.frame(date = as.Date(key_stats$first_date),count = 0,sp_label = "Typical recorder's\n first record",year = "2024")
 }
 
 if(treatment_group == "none"){
@@ -409,8 +452,22 @@ if(treatment_group == "none"){
 #step plot
 #species count
 step_plot <- ggplot(step_plot_data,aes(x = date,y = count,colour = year))+
-  {if(treatment_group == "background")geom_hline(yintercept = key_stats$avg_species_count,linetype = 2,colour = "#404040",linewidth = 1.3)}+
+  {if(treatment_group == "background")geom_segment(
+    x = key_stats$first_date,
+    y =0, 
+    xend =as.Date(Sys.Date()),
+    yend = key_stats$avg_species_count,linetype = 2,
+    colour = "#404040",
+    linewidth = 1.3)
+  }+
+  {if(treatment_group == "background")geom_hline(
+    yintercept = key_stats$avg_species_count,linetype = 2,
+    colour = "#404040",
+    linewidth = 1.3,
+    alpha = 0)
+  }+
   scale_x_date(date_labels = "%b", )+
+  scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(min(x), (max(x) + 1) * 1.1)))))+
   geom_step(position = "identity",linewidth = 1.3)+
   #geom_point(data = data_all_species %>% filter(year == 2025) %>% tail(1),shape=17,size = 4) +
   theme_minimal(base_size = 20)+
@@ -426,7 +483,8 @@ step_plot <- ggplot(step_plot_data,aes(x = date,y = count,colour = year))+
   guides(colour=guide_legend(position = "inside"))+
   labs(title = "Your species count")+
   geom_label_repel(data = labels,aes(label = sp_label),colour = "#92A41A",nudge_x = -70,nudge_y =2,box.padding = 0.1,size = 3.5,fontface = 'italic',force = 5)+
-  {if(treatment_group == "background")geom_label_repel(data = avg_label,aes(label =sp_label),nudge_x = +70,nudge_y =-2)}+
+  {if(treatment_group == "background")geom_label_repel(data = avg_label,aes(label =sp_label),nudge_x = +70,nudge_y =-0.5)}+
+  {if(treatment_group == "background")geom_label_repel(data = first_label,aes(label =sp_label),nudge_x = +70,nudge_y =0.5)}+
   coord_cartesian(xlim = c(as.Date("2025-01-01"),as.Date("2025-09-30")))+
   {if(treatment_group %in% c("none","background"))guides(colour = "none")}
 
@@ -434,9 +492,15 @@ step_plot <- ggplot(step_plot_data,aes(x = date,y = count,colour = year))+
 step_plot
 ```
 
+Please note a species name might appear twice if you have recorded a subspecies or an species synonym.
+
 ## A big thank you!
 
-Every single record you submit plays a vital role in understanding and protecting biodiversity.
+Every single record you submit plays a vital role in understanding and protecting biodiversity. There are different ways to record and generate valuable biodiversity data. For example:
+
+ * Record the same place consistently to help understand trends
+ * Record in different places to help understand species distributions
+
 
 ```{r, results = "asis"}
 
@@ -450,3 +514,16 @@ if (target_group=="dragonflies"){
 
 ```
 
+---
+
+
+
+<div align="center">
+Rate this email out of 10
+
+```{r, results = "asis"}
+
+cat(paste0("<a href='https://forms.office.com/Pages/ResponsePage.aspx?id=NlECf_M5LE-jxsuxziGzal97bLz2Q2BBrnNyNFwVq4NURDBXU0k1RFdVREJDVEVJMTlGNFBBRkM2Ty4u&r6cdf8297338f44b2a40063ab6c30a18a=",1:10,"&r2ed61d88722b4e12955003f0cc4cb633=",params$user_email,"'>",1:10,"</a> "))
+
+```
+</div>

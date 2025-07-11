@@ -30,7 +30,9 @@ compute_objects <- function(data){
   visits <- data %>% 
     group_by(species_group,date,user_id,site_name,.drop = FALSE) %>% 
     summarise(n_records=n(),
-              longer_list = n()>3)
+              n_species = length(unique(species))
+              ) %>%
+    mutate(longer_list = n_species>3)
   
   key_stats <- visits %>% 
     group_by(user_id,species_group,.drop = FALSE) %>% 
@@ -40,19 +42,31 @@ compute_objects <- function(data){
               n_longer_lists = sum(longer_list),
               .groups = "drop") %>%
     group_by(species_group) %>%
-    summarise(avg_visits = round(mean(n_visits)),
-              avg_records = round(mean(n_records)),
-              avg_sites = round(mean(n_sites)),
-              avg_longer_lists = round(mean(n_longer_lists)))
+    summarise(avg_visits = round(median(n_visits)),
+              avg_records = round(median(n_records)),
+              avg_sites = round(median(n_sites)),
+              avg_longer_lists = round(median(n_longer_lists)))
   
   #unique species
   n_species <- data %>% 
     group_by(species_group,user_id,.drop = FALSE) %>%
     summarise(n_species = length(unique(species))) %>%
     group_by(species_group) %>%
-    summarise(avg_species_count = round(mean(n_species)))
+    summarise(avg_species_count = round(median(n_species)))
   
-  key_stats <- left_join(key_stats,n_species) %>% arrange(species_group)
+  #median first date 
+  median_first_date <-
+    data %>% 
+    group_by(user_id,species_group) %>%
+    arrange(date) %>%
+    summarise(first_date = first(date)) %>%
+    mutate(first_date = as.Date(first_date))%>%
+    group_by(species_group) %>%
+    summarise(first_date= median(first_date))
+  
+  key_stats <- left_join(key_stats,n_species) %>%
+    left_join(median_first_date)%>% 
+    arrange(species_group)
   
   
   #return the list of precalculated objects
