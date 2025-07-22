@@ -38,6 +38,8 @@ for (i in 1:nrow(subscribers_df)){
                                  user_id = data_out$hits$hits$`_source`$metadata$created_by_id
       )
       
+      saveRDS(user_records,paste0("data/user_records/",as.character(subscribers_df$user_id[i]),".rds"))
+      
       records_data <- rbind(records_data,user_records)
     }
     
