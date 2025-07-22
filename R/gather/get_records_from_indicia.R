@@ -18,7 +18,11 @@ get_data_helper <- function(base_url,auth_header,query){
   handle_setopt(h,postfields = query)
   
   req <- curl_fetch_memory(url = base_url,handle = h)
-  fromJSON(rawToChar(req$content))
+  
+  out <- fromJSON(rawToChar(req$content))
+  
+  out$status_code <- req$status_code
+  out
 }
 
 
