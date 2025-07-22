@@ -47,4 +47,12 @@ for (i in 1:nrow(subscribers_df)){
   print(paste0(nrow(data_out$hits$hits$`_source`), " records downloaded for user"))
 }
 
+
 write.csv(records_data,config$data_file,row.names = F)#save the data
+
+if(F){
+  files <- list.files("data/user_records", pattern = "\\.rds$", full.names = TRUE)
+  list_data <- lapply(files, readRDS)
+  df <- do.call(rbind, list_data)
+  write.csv(df,config$data_file,row.names = F)#save the data
+}
