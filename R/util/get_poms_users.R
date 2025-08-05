@@ -3,7 +3,7 @@
 print("Loading R packages...")
 library(RJDBC)
 library(dplyr)
-config <- config::get()
+config <- config::get(config="poms")
 
 print("Loading JDBC driver...")
 drv <- JDBC(driverClass = "org.postgresql.Driver",classPath = Sys.getenv("JAVA_PATH"))
@@ -28,5 +28,5 @@ result <- dbGetQuery(con, query)
 result <- result %>% rename("email"="email_address", "user_id" = "created_by_id","name" = "first_name") %>% mutate(email =tolower(email)) %>% mutate(name = if_else(name=="?",email,name))
 
 print("Saving data...")
-write.csv(result,"data/poms_partipants.csv" ,row.names = FALSE)
+write.csv(result,config$participant_data_file ,row.names = FALSE)
 print("Data saved")
