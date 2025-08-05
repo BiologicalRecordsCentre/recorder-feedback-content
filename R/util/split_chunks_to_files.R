@@ -24,7 +24,7 @@ split_chunks_to_files <- function(rmd_file, output_dir = "chunks") {
       chunk_name <- sub("^```\\{r\\s*([^,}]*)?.*", "\\1", line)
       if (chunk_name == line) chunk_name <- paste0("unnamed_chunk_", chunk_index)
       if (chunk_name == "") chunk_name <- paste0("chunk_", chunk_index)
-      
+      chunk_name <- gsub(" ","",chunk_name)
       chunk_lines <- c()
       
     } else if (grepl("^```$", line) && in_chunk) {

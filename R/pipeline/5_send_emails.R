@@ -27,9 +27,7 @@ if(config$mail_creds == "anonymous"){
 }
 
 meta_table <-read.csv(paste0("renders/",batch_id,"/meta_table.csv"))
-meta_table$email <- "simon.p.rolph@gmail.com"
 participants <- read.csv(config$participant_data_file)
-participants$email <- "simon.p.rolph@gmail.com"
 
 #here we are going through all the users and sending email
 if (!is.data.frame(meta_table)) {

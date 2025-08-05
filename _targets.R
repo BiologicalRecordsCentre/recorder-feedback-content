@@ -2,11 +2,17 @@ library(targets)
 library(tarchetypes)
 library(assertr)
 
+#batch identifier
+batch_id <- Sys.getenv("BATCH_ID")
+if (batch_id == ""){
+  batch_id <- "test"
+}
+
 #distributed computing set up
 library(crew)
 tar_option_set(
-  controller = crew_controller_local(workers = 4),
-  seed = as.numeric(Sys.time())
+  controller = crew_controller_local(workers = 4)#,
+  #seed = as.numeric(paste0(utf8ToInt("batch_id"),collapse="")) # turn the batch ID into a seed
 )
 
 tar_option_set(packages = c("dplyr", "ggplot2","rmarkdown","tidyr","lubridate"))
@@ -33,49 +39,40 @@ data_file <- read.csv(config$data_file) #raw species data
 names(users) <- paste0(names(users),"_") #apply an underscore to after the name to differentiate it
 values <- users #values for static branching
 
-#batch identifier
-batch_id <- Sys.getenv("BATCH_ID")
-if (batch_id == ""){
-  batch_id <- "test"
-}
-
 # mapping for static branching
 mapping <- tar_map(
   values = values,
   names = user_id_,
   
-  tar_target(user_data, filter(raw_data,user_id == user_id_)), #generate a df for the user's recording activity
-  
-  #do any computations on the user data
-  tar_target(user_computed_objects,do_computations(computation = computation_file_user, records_data=user_data)),
-  
-  # generate a content_key
-  tar_force(content_key,paste(sample(c(1:9,letters),16,replace = T),collapse = ""),force = T),
-  
-  tar_target(user_params_, list(user_name = name_,
-                               user_email = email_,
-                               user_data = user_data,
-                               user_computed_objects = user_computed_objects,
-                               bg_data = raw_data,
-                               bg_computed_objects = bg_computed_objects,
-                               content_key = content_key,
-                               config = config,
-                               extra_params = users_target %>% filter(user_id == user_id_) %>% select(-name,-email)
-                               
-  )),
+  tar_target(
+    user_objects,
+    list(
+      user_data = filter(raw_data,user_id == user_id_), #generate a df for the user's recording activity
+      user_computed_objects = do_computations(computation = computation_file_user, records_data=filter(raw_data,user_id == user_id_)), #do any computations on the user data
+      content_key = paste(batch_id,sample(c(1:9,letters),16,replace = T),collapse = "") # generate a content_key
+      )
+    ),
   
   #render the content
   tar_target(data_story_content, 
              render_content(
                template_file = template_file,
-               user_params = user_params_,
+               user_params = list(user_name = name_,
+                                  user_email = email_,
+                                  user_data = user_objects$user_data,
+                                  user_computed_objects = user_objects$user_computed_objects,
+                                  bg_data = raw_data,
+                                  bg_computed_objects = bg_computed_objects,
+                                  content_key = user_objects$content_key,
+                                  config = config,
+                                  extra_params = users_target %>% filter(user_id == user_id_) %>% select(-name,-email)),
                user_id = user_id_,
                batch_id = batch_id,
                template_html = template_html_file
                ),
              format="file"), # create the content as html
   
-  tar_target(meta_data,list(user_id = user_id_,file = data_story_content,content_key = content_key))
+  tar_target(meta_data,list(user_id = user_id_,file = data_story_content,content_key = user_objects$content_key))
 )
 
 # construct pipeline

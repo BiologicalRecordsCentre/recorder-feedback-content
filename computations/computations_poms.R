@@ -17,13 +17,33 @@ compute_objects <- function(data){
     pull(n_counts) %>%
     mean()
   
+  mean_n_fit_counts_prev = data %>% 
+    filter(year == previous_year) %>%
+    group_by(user_id) %>% 
+    summarise(n_counts = n()) %>%
+    pull(n_counts) %>%
+    mean()
+  
   if(is.nan(mean_n_fit_counts)){
     mean_n_fit_counts <- 0
+  }
+  
+  if(is.nan(mean_n_fit_counts_prev)){
+    mean_n_fit_counts_prev <- 0
   }
   
   #mean number of records
   mean_n_insects = data %>%
     filter(year == current_year) %>%
+    rowwise() %>%
+    mutate(n_insects = sum(c(bumblebees,honeybees,solitary_bees,wasps,hoverflies,other_flies,butterflies_moths,beetles,insects_small,insects_other), na.rm=T)) %>%
+    group_by(user_id) %>% 
+    summarise(total_insects = sum(n_insects, na.rm=T)) %>%
+    pull(total_insects) %>%
+    mean()
+  
+  mean_n_insects_prev = data %>%
+    filter(year == previous_year) %>%
     rowwise() %>%
     mutate(n_insects = sum(c(bumblebees,honeybees,solitary_bees,wasps,hoverflies,other_flies,butterflies_moths,beetles,insects_small,insects_other), na.rm=T)) %>%
     group_by(user_id) %>% 
@@ -40,6 +60,13 @@ compute_objects <- function(data){
     filter(year == current_year) %>%
     group_by(target_flower) %>%
     summarise(n= n())
+  if(mean_n_fit_counts ==0){
+    flower_types_recorded <- data %>%
+      filter(year == previous_year) %>%
+      group_by(target_flower) %>%
+      summarise(n= n())
+  }
+  
   
   flower_types <- 
     data.frame(x = c("Ivy ",
@@ -91,6 +118,8 @@ compute_objects <- function(data){
   #return the list of precalculated objects
   list(mean_n_fit_counts = mean_n_fit_counts,
        mean_n_insects = mean_n_insects,
+       mean_n_fit_counts_prev = mean_n_fit_counts_prev,
+       mean_n_insects_prev = mean_n_insects_prev,
        flower_types_recorded = flower_types_recorded,
        daily_counts_current_year = daily_counts_current_year,
        daily_counts_previous_year = daily_counts_previous_year)

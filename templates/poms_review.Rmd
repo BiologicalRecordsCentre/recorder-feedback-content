@@ -9,6 +9,7 @@ params:
     user_email: "UNKNOWN"
     content_key: ""
     config: ""
+    extra_params: ""
 footer-date-time: "`r  format(Sys.time(), '%Y-%m-%d %H:%M:%S %Z')`"
 user-email: "`r params$user_email`"
 ---
@@ -41,22 +42,46 @@ library(ggspatial)
 library(ggrepel)
 ```
 
+<p align="center">
 ![](static/poms/poms_logo.png){width=250px}
+</p>
+
+```{r, results='asis'}
+include_message <- T
+if(include_message){
+  cat("<div style='border: 2px grey; padding: 10px; background-color: lightgrey;'><p>We are trialling personalised insights for UK PoMS. This will include summaries and data visualisations based on the PoMS Fit Counts you have contributed. You are receiving this email because you have submitted at least one PoMS FIT count in 2025 or 2024.</p><p>This email is the first of these emails. These will be sent infrequently, and we intend to send one more email in 2025 towards the end of the PoMS monitoring seasons.</p><p>If you do not wish to receive these emails you can opt-out <a href='",paste0("https://forms.cloud.microsoft/Pages/ResponsePage.aspx?id=NlECf_M5LE-jxsuxziGzal97bLz2Q2BBrnNyNFwVq4NUMVRRTVkyMlo4STNMQkIyOVRKT1BUS0xDRi4u&r98c2e00a38e74d83bbf09f9077ce42c8=",params$user_email),"'>here</a></p></div>")
+}
+
+```
 
 ```{r}
 current_year <- lubridate::year(Sys.Date())
 previous_year <- current_year -1
+
+recorded_this_year <- (params$user_data %>% filter(as.POSIXct(date_from)>as.Date("2025-01-01")) %>% nrow())>0
+focal_year <- if_else(recorded_this_year,current_year,previous_year)
 ```
 
 # Your PoMS FIT Count Update
 
 Hello `r params$user_name`,
 
-Welcome to your personal PoMS FIT Count update. Let's see what data you've contributed so far! If you need any information about how to do a FIT Count please visit the [PoMS website](https://ukpoms.org.uk/fit-counts). 
+Welcome to your personal PoMS FIT Count update. Let's see what data you've contributed! If you need any information about how to do a FIT Count please visit the [PoMS website](https://ukpoms.org.uk/fit-counts). 
+
+`r if_else(recorded_this_year,"","You haven't submitted any FIT Counts for 2025 yet. Let's take a look at your counts for 2024.")`
+
+```{r}
+#SUMMARY
+if(recorded_this_year){
+  message1 <- paste0("You counted ",params$user_computed_objects$mean_n_insects," insects in ",current_year, " across **", params$user_computed_objects$mean_n_fit_counts,"** FIT Counts.")
+} else {
+    message1 <- paste0("You counted ",params$user_computed_objects$mean_n_insects_prev," insects in ",previous_year, " across **", params$user_computed_objects$mean_n_fit_counts_prev,"** FIT Counts.")
+}
+```
 
 ## Summary
 
-You have recorded **`r params$user_computed_objects$mean_n_insects`** insects in `r current_year` across **`r params$user_computed_objects$mean_n_fit_counts`** FIT Counts.
+`r message1`
 
 ## Your latest FIT Count
 
@@ -84,7 +109,7 @@ last_count2 <- last_count %>%
 
 ```
 
-The most recent FIT Count you did was **`r as.numeric(difftime(Sys.Date(),last_count$date_from %>% as.Date(),units= "days"))`** days ago on `r last_count$date_from %>% as.Date() %>% format("%A %d %B %Y")`, you observed **`r sum(last_count2$count, na.rm=T)`** insects and the target flower was `r tolower(last_count$target_flower) %>% substr(., 1, nchar(.)-1)`. `r if_else(sum(last_count2$count, na.rm=T)==0,"Even though you recorded no insects your FIT Count still provides us with valuable data about pollinating insects!","") `
+The last FIT Count you did was **`r as.numeric(difftime(Sys.Date(),last_count$date_from %>% as.Date(),units= "days"))`** days ago on `r last_count$date_from %>% as.Date() %>% format("%A %d %B %Y")`, you observed **`r sum(last_count2$count, na.rm=T)`** insects and the target flower was `r tolower(last_count$target_flower) %>% substr(., 1, nchar(.)-1)`. `r if_else(sum(last_count2$count, na.rm=T)==0,"Even though you recorded no insects your FIT Count still provides us with valuable data about pollinating insects!","") `
 
 ```{r}
 if(sum(last_count2$count, na.rm=T)>0){
@@ -115,7 +140,16 @@ if(sum(last_count2$count, na.rm=T)>0){
 
 ## Count activity
 
-So far in `r current_year` you have contributed **`r params$user_computed_objects$mean_n_fit_counts`** FIT Counts. Every single count helps make our data more meaningful! In grey you can see your counts from `r previous_year`.
+```{r}
+if(recorded_this_year){
+  message2 <- paste0("So far in ",current_year," you have contributed **",params$user_computed_objects$mean_n_fit_counts,"** FIT Counts. Every single count helps make our data more meaningful! In you were able to take part in 2024, your counts from 2024 are included in grey.")
+} else {
+    message2 <- paste0("In ",current_year," you contributed **",params$user_computed_objects$mean_n_fit_counts_prev,"** FIT Counts. Every single count helps make our data more meaningful!")
+}
+
+```
+
+`r message2`
 
 ```{r}
 library(lubridate)
@@ -137,9 +171,10 @@ current_year_df <- params$user_computed_objects$daily_counts_current_year %>%
 date_lims <- as.POSIXct(c(paste0(current_year,"-03-29"),paste0(current_year,"-10-01")))
 current_year_df %>%
   ggplot(aes(x = day, y= cumulative)) +
-  geom_step(data = previous_year_df,size = 1,colour = "grey") +
-  geom_step(size = 1,colour = "#b31982") +
-  geom_point(data = last_point,size = 4,shape = 17,colour = "#b31982") +
+  {if(recorded_this_year)geom_step(data = previous_year_df,size = 1,colour = "grey")}+
+  {if(recorded_this_year)geom_step(size = 1,colour = "#b31982")} +
+  {if(recorded_this_year)geom_point(data = last_point,size = 4,shape = 17,colour = "#b31982")} +
+  {if(!recorded_this_year)geom_step(data = previous_year_df,size = 1,colour = "#b31982")}+
   scale_x_datetime(date_breaks="1 month", date_labels="%b",limits =date_lims) +
   scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(min(x), (max(x) + 1) * 1.1)))))+
   theme_minimal(base_size = 15)+
@@ -147,14 +182,47 @@ current_year_df %>%
 
 ```
 
-Altogether, a total of **`r params$bg_computed_objects$daily_counts_current_year$n %>% sum() `** FIT Counts have been submitted to UK PoMS so far in `r current_year`. The most FIT Counts on one day was `r params$bg_computed_objects$daily_counts_current_year$n %>% max()`! The plot below shows your FIT Count activity plotted against all counts submitted across the UK.
+```{r}
+
+if(recorded_this_year){
+  plot_data <- params$bg_computed_objects$daily_counts_current_year %>%
+    mutate(type = "others") %>%
+    bind_rows(mutate(params$user_computed_objects$daily_counts_current_year,type = "you")) %>%
+    filter(day >= as.Date(paste0(current_year,"-03-29")))
+  
+  message3 <- paste0(
+    "Altogether, a total of **",
+    params$bg_computed_objects$daily_counts_current_year$n %>% sum(),
+    "** FIT Counts have been submitted to UK PoMS so far in ",
+    current_year,
+    ". Highest number of FIT Counts on a single day was ",
+    params$bg_computed_objects$daily_counts_current_year$n %>% max(),
+    "! The plot below shows your FIT Count activity plotted against all counts submitted across the UK."
+  )
+  
+} else {
+    plot_data <- params$bg_computed_objects$daily_counts_previous_year %>%
+    mutate(type = "others") %>%
+    bind_rows(mutate(params$user_computed_objects$daily_counts_previous_year,type = "you")) %>%
+    filter(day >= as.Date(paste0(previous_year,"-03-29")))
+    
+  message3 <- paste0(
+    "Altogether, a total of **",
+    params$bg_computed_objects$daily_counts_previous_year$n %>% sum(),
+    "** FIT Counts were submitted to UK PoMS in ",
+    previous_year,
+    ". Highest number of FIT Counts on a single day was ",
+    params$bg_computed_objects$daily_counts_previous_year$n %>% max(),
+    "! The plot below shows your FIT Count activity plotted against all counts submitted across the UK."
+  )
+}
+```
+
+`r message3`
 
 ```{r}
 
-params$bg_computed_objects$daily_counts_current_year %>%
-  mutate(type = "others") %>%
-  bind_rows(mutate(params$user_computed_objects$daily_counts_current_year,type = "you")) %>%
-  filter(day >= as.Date(paste0(current_year,"-03-29"))) %>%
+plot_data %>%
   ggplot(aes(x = day,y = n,fill = type)) + 
     geom_col(width = 86400,position="identity")+
     scale_fill_manual(labels = c("Other FIT Counters","Your contributions"),values=c("grey","#b31982"))+
@@ -169,7 +237,29 @@ params$bg_computed_objects$daily_counts_current_year %>%
   
 ```
 
-Here is a map showing the locations where you have made FIT Counts. In grey you can see the locations that you did FIT Counts in `r previous_year`. If you can carry out several Counts at one location throughout the year you will be adding extra value to your survey records. You can see where FIT Counts have been done in the current season in the [online map](https://ukpoms.org.uk/fit-counts-map).
+
+```{r}
+if(recorded_this_year){
+  message_map <- paste0(
+    "Here's a map of the locations of your ",params$user_computed_objects$mean_n_fit_counts," FIT Counts in 2025. If you were able to participate in ",
+    previous_year,
+    " those locations appear in grey. By carrying out several Counts at one location throughout the year you will be adding extra value to your survey records. You can see where FIT Counts have been done in the current season in the ",
+    "[online map](https://ukpoms.org.uk/fit-counts-map)."
+  )
+} else {
+  message_map <- paste0(
+    "Here's a map of the locations of your ",params$user_computed_objects$mean_n_fit_counts_prev," FIT Counts from ",
+    previous_year,
+    ". By carrying out several Counts at one location throughout the year you will be adding extra value to your survey records. You can see where FIT Counts have been done in the current season in the ",
+    "[online map](https://ukpoms.org.uk/fit-counts-map)."
+    )
+  
+}
+
+
+```
+
+`r message_map`
 
 ```{r map}
 #test <- read.csv(config$data_file)
@@ -215,8 +305,9 @@ square_bounds <- data.frame(
 ggplot() +
   ggspatial::annotation_map_tile(type="osm",progress = "none",zoomin=-1) +
   ggspatial::layer_spatial(square_bounds,size = 0,alpha =0) +  # <-- square padding
-  ggspatial::layer_spatial(user_data_sf %>% filter(year == previous_year), colour = "gray", size = 5) +
-  ggspatial::layer_spatial(user_data_sf %>% filter(year == current_year), colour = "#b31982", size = 5) +
+  {if(recorded_this_year)ggspatial::layer_spatial(user_data_sf %>% filter(year == previous_year), colour = "gray35", size = 5)} +
+  {if(recorded_this_year)ggspatial::layer_spatial(user_data_sf %>% filter(year == current_year), colour = "#b31982", size = 5)} +
+  {if(!recorded_this_year)ggspatial::layer_spatial(user_data_sf %>% filter(year == previous_year), colour = "#b31982", size = 5)} +
   geom_spatial_label_repel(
     data = counts_map_data %>% filter(year == current_year, n > 1),
     aes(LONGITUDE, LATITUDE, label = label),
@@ -236,7 +327,7 @@ ggplot() +
 
 ## Target flowers
 
-In `r current_year`, you've completed FIT Counts on **`r params$user_computed_objects$flower_types_recorded %>% filter(n>0) %>% nrow()`** different target flower types! You can find a guide to identifying the target flowers [here](https://ukpoms.org.uk/sites/default/files/pdf/FIT%20Count%20flower%20guide%20v7.pdf).
+In `r if_else(recorded_this_year,current_year,previous_year)`, you `r if_else(recorded_this_year,"have","")` completed FIT Counts on **`r params$user_computed_objects$flower_types_recorded %>% filter(n>0) %>% nrow()`** different target flower types! You can find a guide to identifying the target flowers [here](https://ukpoms.org.uk/sites/default/files/pdf/FIT%20Count%20flower%20guide%20v7.pdf).
 
 ```{r}
 params$user_computed_objects$flower_types_recorded %>%
@@ -251,23 +342,25 @@ params$user_computed_objects$flower_types_recorded %>%
 
 ## Insect diversity
 
-In `r current_year`, you observed an average of `r median(params$user_data$all_insects_total, na.rm=T)` insects per FIT Count . Let's take a look at the types of insects you most frequently observed per FIT Count (totals from all your Counts so far), and see how that compares to other FIT Counters.
+In `r focal_year`, you observed an average of `r params$user_data %>% filter(year == focal_year) %>% pull(all_insects_total) %>% median(na.rm=T)` insects per FIT Count . Let's take a look at the types of insects you most frequently observed per FIT Count (totals from all your Counts so far), and see how that compares to other FIT Counters.
 
 ```{r, echo=F}
 #user's taxon groups proportions
 user_diversity <- params$user_data %>%
+  mutate_all(~replace(., is.na(.), 0)) %>%
   mutate(year = lubridate::year(as.POSIXct(date_from))) %>%
-  filter(year == current_year) %>%
+  filter(year == focal_year) %>%
   select(user_id,sample_id,bumblebees,honeybees,solitary_bees,wasps,hoverflies,other_flies,butterflies_moths,beetles,insects_small,insects_other) %>%
   pivot_longer(c(-user_id,-sample_id)) %>%
   group_by(user_id,name) %>%
-  summarise(average_count_per_fit = median(value,na.rm=T)) %>%
+  summarise(average_count_per_fit = mean(value,na.rm=T)) %>%
   mutate(you = T)
             
 
 bg_diversity <- params$bg_data %>%
+  mutate_all(~replace(., is.na(.), 0)) %>%
   mutate(year = lubridate::year(as.POSIXct(date_from))) %>%
-  filter(year == current_year) %>%
+  filter(year == focal_year) %>%
   select(user_id,sample_id,bumblebees,honeybees,solitary_bees,wasps,hoverflies,other_flies,butterflies_moths,beetles,insects_small,insects_other) %>%
   pivot_longer(c(-user_id,-sample_id)) %>%
   group_by(user_id,name) %>%
@@ -310,6 +403,13 @@ diversity %>%
 Thank you for sending in your FIT Count results! Please do continue counting when you can, the more results we have the better we are able to monitor how pollinators are doing.
 
 Don't forget: FIT Counts can be done anywhere, including gardens and parks, in warm, dry weather during daylight hours from 1 April to 30 September. You can do surveys using the [FIT Count app](https://ukpoms.org.uk/fit-count-app)
+
+<!--There are different ways to record and generate valuable biodiversity data. For example:
+
+ * Complete FIT Counts in the same place over time to help understand changing flight periods within a season, or trends across years
+ * Complete FIT Counts in different places to help understand species distributions
+ * Complete FIT Counts for different target flowers to help understand plant-pollinator interactions
+ -->
 
 You can also sign up to the PoMS newsletter mailing list [here](https://ukpoms.org.uk/subscribe).
 
