@@ -25,7 +25,7 @@ query <- readLines("sql/poms_users.sql") |> paste(collapse = "\n")
 print("Querying database...")
 result <- dbGetQuery(con, query)
 
-result <- result %>% rename("email"="email_address") %>% mutate(email =tolower(email))
+result <- result %>% rename("email"="email_address", "user_id" = "created_by_id","name" = "first_name") %>% mutate(email =tolower(email)) %>% mutate(name = if_else(name=="?",email,name))
 
 print("Saving data...")
 write.csv(result,"data/poms_partipants.csv" ,row.names = FALSE)
