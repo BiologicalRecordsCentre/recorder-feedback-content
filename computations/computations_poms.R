@@ -74,7 +74,7 @@ compute_objects <- function(data){
                       "Lavender (English) ",
                       "Dandelion ",
                       "Buttercup ",
-                      "Buddleja ",
+                      "Buddleja",
                       "Ragwort ", 
                       "Heathers ", 
                       "Knapweeds (Common or Greater) ", 

@@ -12,7 +12,7 @@ if (batch_id == ""){
 library(crew)
 tar_option_set(
   controller = crew_controller_local(workers = 4)#,
-  #seed = as.numeric(paste0(utf8ToInt("batch_id"),collapse="")) # turn the batch ID into a seed
+  #seed = as.numeric(paste0(utf8ToInt("batch_id"),collapse="")) # turn the batch ID into a seed so that the pipeline always reruns from scratch - if you want that behaviour
 )
 
 tar_option_set(packages = c("dplyr", "ggplot2","rmarkdown","tidyr","lubridate"))
@@ -49,7 +49,7 @@ mapping <- tar_map(
     list(
       user_data = filter(raw_data,user_id == user_id_), #generate a df for the user's recording activity
       user_computed_objects = do_computations(computation = computation_file_user, records_data=filter(raw_data,user_id == user_id_)), #do any computations on the user data
-      content_key = paste(batch_id,sample(c(1:9,letters),16,replace = T),collapse = "") # generate a content_key
+      content_key = paste0(batch_id,paste0(sample(c(1:9,letters),16,replace = T),collapse="")) # generate a content_key
       )
     ),
   

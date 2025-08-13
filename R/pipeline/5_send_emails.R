@@ -34,6 +34,11 @@ if (!is.data.frame(meta_table)) {
   stop("meta_table must be a data frame.")
 }
 
+#check if all the html files are there
+if(nrow(meta_table) != length(list.files(paste0("renders/",batch_id),pattern = "*.html"))){
+  stop("The number of rows in the meta_table is not equal to the number of .html files to be sent")
+}
+
 for (i in 1:nrow(meta_table)) {
   
   result <- tryCatch({
@@ -41,12 +46,12 @@ for (i in 1:nrow(meta_table)) {
     print(paste("Processing row:", i))
     
     # Check for required columns in meta_table
-    if (!all(c("content_key", "user_id", "file", "email") %in% colnames(meta_table))) {
+    if (!all(c("content_key","user_id", "file", "email") %in% colnames(meta_table))) {
       stop("meta_table is missing required columns.")
     }
     
     # Safely extract values
-    content_key <- meta_table[i, "content_key"]
+    #content_key <- meta_table[i, "content_key"]
     user_id <- meta_table[i, "user_id"]
     file <- meta_table[i, "file"]
     email <- meta_table[i, "email"]
