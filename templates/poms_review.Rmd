@@ -113,11 +113,46 @@ The last FIT Count you did was **`r as.numeric(difftime(Sys.Date(),last_count$da
 
 ```{r}
 if(sum(last_count2$count, na.rm=T)>0){
-  last_count2 %>% ggplot(aes(y= group, x= count))+
-  geom_col(fill = "#b31982")+
-  theme_minimal(base_size = 15) +
-  labs(y = "Pollinator group",x = "Number of insects")+
-  scale_x_continuous(breaks = function(x) unique(floor(pretty(seq(min(x), (max(x) + 1) * 1.1))))) # only integer values
+  
+  dots_data <- last_count2 %>% 
+    mutate(
+      # Preserve original order, but reverse for plotting
+      group = factor(group, levels = rev(unique(group))),
+      count = ifelse(is.na(count), 0, count)
+    ) %>%
+    rowwise() %>%
+    mutate(x_point = list(seq_len(count))) %>%
+    unnest(cols = c(x_point))
+  
+  ggplot(dots_data, aes(x = x_point, y = group,shape = group)) +
+    geom_point(fill = "#b31982",colour = "#b31982", size = 6) +
+    scale_shape_manual(
+      values = c(
+        "Bumblebees" = "🐝",
+        "Honeybees" = "🐝",
+        "Solitary Bees" = "🐝",
+        "Wasps" = "🐝",
+        "Hoverflies" = "🪰",
+        "Other Flies" = "🪰",
+        "Butterflies and Moths" = "🦋",
+        "Beetles" = "🪲",
+        "Small Insects" = "🦟",
+        "Other Insects" = "🦟"))+
+    scale_y_discrete(drop = FALSE) +  # keep zero-count groups
+    theme_minimal(base_size = 15) +
+    labs(y = "Pollinator group", x = "Number of insects") +
+    scale_x_continuous(
+      minor_breaks = NULL,
+      breaks = function(x) unique(floor(pretty(seq(min(x), (max(x) + 1) * 1.1)))),
+      limits = c(0.75, max(dots_data$x_point, na.rm = TRUE)+0.25)
+    )+ theme(legend.position="none")
+  
+  # create a dataset with one row per point
+# last_count2 %>% ggplot(aes(y= group, x= count))+
+#   geom_col(fill = "#b31982")+
+#   theme_minimal(base_size = 15) +
+#   labs(y = "Pollinator group",x = "Number of insects")+
+#   scale_x_continuous(breaks = function(x) unique(floor(pretty(seq(min(x), (max(x) + 1) * 1.1))))) # only integer values
 }
 
 # if(sum(last_count2$count, na.rm=T)>0){
