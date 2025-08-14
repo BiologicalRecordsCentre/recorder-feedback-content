@@ -1,0 +1,1 @@
+This folder is for scripts that you don't want to commit to github, for testing, prototyping etc.
